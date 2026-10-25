@@ -109,10 +109,8 @@ function visitorRegion(cf) {
   }
 }
 /**
- * Idempotent schema upkeep in ONE batch (all IF NOT EXISTS → cheap no-op
- * after first call): app_state (sweep marker + uptime buckets), user_versions
- * (pull counter), notes (lazy heal), + username indexes (avoid full scans).
- * Runs on the pull path; must stay cached (ensureSchemaCached) — never per request.
+ * Idempotent upkeep for operational state and the Split Task sync counter.
+ * Product tables and indexes are installed by an explicit schema migration.
  */
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 let schemaCheckedAt = 0;
@@ -126,31 +124,8 @@ async function ensureSchemaCached(db) {
 async function ensureSchema(db) {
   await db.batch([
     db.prepare('CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT)'),
-    db.prepare('CREATE TABLE IF NOT EXISTS user_versions (username TEXT NOT NULL PRIMARY KEY REFERENCES users(username) ON DELETE CASCADE, version INTEGER NOT NULL DEFAULT 0)'),
-    db.prepare('CREATE TABLE IF NOT EXISTS notes (id TEXT NOT NULL, username TEXT NOT NULL, text TEXT NOT NULL, category_id TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (id, username), FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_notes_username ON notes(username)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_categories_username ON categories(username)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_items_username ON items(username)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_items_username_date ON items(username, item_date)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_items_recurrence_id ON items(recurrence_id)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_items_username_category ON items(username, category_id)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_notes_username_category ON notes(username, category_id)'),
+    db.prepare('CREATE TABLE IF NOT EXISTS split_task_sync_versions (user_id TEXT NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, version INTEGER NOT NULL DEFAULT 0)'),
   ]);
-}
-
-/**
- * items.due_date is an ALTER (can't batch with IF NOT EXISTS) with the same
- * once-per-isolate caching. Push/sweep paths heal before reading it.
- */
-let itemsDueDateCheckedAt = 0;
-async function ensureItemsDueDateCached(db) {
-  if (Date.now() - itemsDueDateCheckedAt < SCHEMA_CHECK_TTL_MS) return;
-  try {
-    await db.prepare('ALTER TABLE items ADD COLUMN due_date TEXT').run();
-  } catch (err) {
-    if (!/duplicate column|already exists/i.test(err?.message || '')) throw err;
-  }
-  itemsDueDateCheckedAt = Date.now();
 }
 
 /**
@@ -176,7 +151,7 @@ const ROLLING_TASK_WHERE = `
       AND (
         due_date IS NULL
         OR item_date < due_date
-        OR COALESCE((SELECT task_deadline_push_enabled FROM user_settings s WHERE s.username = items.username), 1) != 0
+        OR COALESCE((SELECT task_deadline_push_enabled FROM split_task_settings s WHERE s.user_id = split_task_items.user_id), 1) != 0
       )
 `;
 
@@ -184,10 +159,8 @@ async function runDailySweep(env) {
   const db = env['ST-DATABASE'];
   const today = new Date().toISOString().slice(0, 10);
 
-  // Schema upkeep first (cached per isolate); the due_date column must exist
-  // before the rolling query runs, and the day must not be claimed on failure.
+  // Schema upkeep first; the day must not be claimed on failure.
   await ensureSchemaCached(db);
-  await ensureItemsDueDateCached(db);
 
   // Atomically claim today; changes===0 → another isolate already swept.
   const claim = await db.prepare(`
@@ -198,38 +171,38 @@ async function runDailySweep(env) {
   if (claim.meta.changes === 0) return { skipped: true };
 
   const cleanup = await db.prepare(`
-    DELETE FROM items
-    WHERE (username, id) IN (
-      SELECT i.username, i.id
-      FROM items i
-      JOIN user_settings s ON s.username = i.username
+    DELETE FROM split_task_items
+    WHERE (user_id, id) IN (
+      SELECT i.user_id, i.id
+      FROM split_task_items i
+      JOIN split_task_settings s ON s.user_id = i.user_id
       WHERE s.delete_after_days > 0
         AND i.item_date < date('now', 'localtime', '-' || s.delete_after_days || ' days')
     )
   `).run();
 
-  // Usernames first (UPDATE can't report them): bump user_versions after so
-  // devices re-pull the moved dates. A missing table only costs snapshots.
+  // Capture affected account IDs first (UPDATE can't report them): bump versions
+  // after so devices re-pull the moved dates.
   const pushTargets = await db.prepare(`
-    SELECT DISTINCT username FROM items
+    SELECT DISTINCT user_id FROM split_task_items
     WHERE ${ROLLING_TASK_WHERE}
   `).all();
 
   const pushResult = await db.prepare(`
-    UPDATE items
+    UPDATE split_task_items
     SET item_date = date(item_date, '+1 day')
     WHERE ${ROLLING_TASK_WHERE}
   `).run();
 
   // Without the bump, sweep edits sit server-side until the user pushes: pulls
-  // compare against user_versions, and only POST /api/sync used to advance it.
+  // compare against the sync counter, which POST /api/sync also advances.
   let notified = 0;
   for (const row of (pushTargets.results || [])) {
     try {
       await db.prepare(`
-        INSERT INTO user_versions (username, version) VALUES (?, 1)
-        ON CONFLICT(username) DO UPDATE SET version = version + 1
-      `).bind(row.username).run();
+        INSERT INTO split_task_sync_versions (user_id, version) VALUES (?, 1)
+        ON CONFLICT(user_id) DO UPDATE SET version = version + 1
+      `).bind(row.user_id).run();
       notified += 1;
     } catch (err) {
       console.warn('[sweep] version bump skipped:', err?.message || err);
@@ -297,22 +270,28 @@ function timingSafeEqual(a, b) {
 
 /** Normalize + validate a public username (3-32, a-z0-9_-).
  * Case-insensitive: "Cedric" and "cedric" are the same account — always
- * lowercased here, and every DB lookup uses COLLATE NOCASE as backup for
- * legacy mixed-case rows. */
+ * lowercased here and stored as the login identity's normalized identifier. */
 function normUsername(v) {
   const u = String(v || '').trim().toLowerCase();
   return /^[a-z0-9_-]{3,32}$/.test(u) ? u : '';
 }
 
-/** Find a user row case-insensitively; returns row with stored username or null. */
+/** Find a Split Task login identity; returns the stable user ID and public username. */
 async function findUser(db, username) {
   const u = String(username || '').trim();
   if (!u) return null;
-  try {
-    return await db.prepare(
-      'SELECT username, password_hash FROM users WHERE username = ? COLLATE NOCASE'
-    ).bind(u).first();
-  } catch { return null; }
+  return db.prepare(
+    `SELECT u.id AS user_id, i.identifier AS username,
+            i.credential_hash AS password_hash
+     FROM user_identities i
+     JOIN users u ON u.id = i.user_id
+     JOIN user_products up ON up.user_id = u.id
+     WHERE i.provider = 'username_password'
+       AND i.normalized_identifier = ?
+       AND u.status = 'active'
+       AND up.product_key = 'split-task'
+       AND up.status = 'active'`
+  ).bind(u.trim().toLowerCase()).first();
 }
 
 /** Normalize a 64-hex client password hash (SHA-256 of the password). */
@@ -321,13 +300,10 @@ function normHash(v) {
   return /^[0-9a-f]{64}$/.test(h) ? h : '';
 }
 
-/** Verify username + client hash against DB (used by /api/sync GET+POST).
- * Case-insensitive on the username so Cedric == cedric. */
+/** Verify username + client hash against the resolved identity. */
 async function checkUserPassword(db, username, password_hash) {
-  try {
-    const row = await findUser(db, username);
-    return !!row && timingSafeEqual(row.password_hash, password_hash);
-  } catch { return false; }
+  const row = await findUser(db, username);
+  return !!row && timingSafeEqual(row.password_hash, password_hash);
 }
 
 /** Sliding-window rate limit in app_state: key -> {count, reset}. Fail-open. */
@@ -589,19 +565,36 @@ export default {
         const taken = () => jsonResponse({ error: 'That username is already taken. Please choose another one.' }, 409);
         const existing = await findUser(env['ST-DATABASE'], username);
         if (existing) return taken();
+        const userId = crypto.randomUUID();
         try {
-          await env['ST-DATABASE'].prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-            .bind(username, password_hash).run();
+          await env['ST-DATABASE'].batch([
+            env['ST-DATABASE'].prepare('INSERT INTO users (id) VALUES (?)').bind(userId),
+            env['ST-DATABASE'].prepare(`
+              INSERT INTO user_identities (
+                id, user_id, provider, identifier, normalized_identifier,
+                credential_hash, credential_scheme
+              ) VALUES (?, ?, 'username_password', ?, ?, ?, 'sha256-client-v1')
+            `).bind(crypto.randomUUID(), userId, username, username, password_hash),
+            env['ST-DATABASE'].prepare(
+              "INSERT INTO user_products (user_id, product_key) VALUES (?, 'split-task')"
+            ).bind(userId),
+            env['ST-DATABASE'].prepare(`
+              INSERT INTO split_task_categories (id, user_id, name, color)
+              VALUES ('default', ?, 'Default', '#344271')
+            `).bind(userId),
+            env['ST-DATABASE'].prepare(`
+              INSERT INTO split_task_settings (
+                user_id, color_palette, task_notifications, event_notifications,
+                task_deadline_push_enabled, completion_sounds, confetti_enabled
+              ) VALUES (?, '["#344271"]', '[]', '[]', 1, 1, 1)
+            `).bind(userId),
+          ]);
         } catch (err) {
-          if (/UNIQUE constraint failed|SQLITE_CONSTRAINT|D1_ERROR/i.test(err?.message || '') || /users\.username|already exists/i.test(err?.message || '')) {
+          if (/UNIQUE constraint failed:\s*user_identities\.(provider,\s*)?normalized_identifier/i.test(err?.message || '')) {
             return taken();
           }
           throw err;
         }
-        await env['ST-DATABASE'].prepare("INSERT INTO categories (id, username, name, color) VALUES ('default', ?, 'Default', '#344271')")
-          .bind(username).run();
-        await env['ST-DATABASE'].prepare(`INSERT INTO user_settings (username, color_palette, task_notifications, event_notifications, task_deadline_push_enabled, completion_sounds, confetti_enabled) VALUES (?, '["#344271"]', '[]', '[]', 1, 1, 1)`)
-          .bind(username).run();
         return jsonResponse({ success: true, message: 'User registered' }, 201);
       }
 
@@ -662,16 +655,9 @@ export default {
           return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
         }
 
-        // 2. Delete all user records across all database tables using a batch transaction
-        // COLLATE NOCASE: legacy "Cedric" rows delete when logging in as "cedric".
-        await env['ST-DATABASE'].batch([
-          env['ST-DATABASE'].prepare('DELETE FROM items WHERE username = ? COLLATE NOCASE').bind(username),
-          env['ST-DATABASE'].prepare('DELETE FROM notes WHERE username = ? COLLATE NOCASE').bind(username),
-          env['ST-DATABASE'].prepare('DELETE FROM categories WHERE username = ? COLLATE NOCASE').bind(username),
-          env['ST-DATABASE'].prepare('DELETE FROM user_settings WHERE username = ? COLLATE NOCASE').bind(username),
-          env['ST-DATABASE'].prepare('DELETE FROM user_versions WHERE username = ? COLLATE NOCASE').bind(username),
-          env['ST-DATABASE'].prepare('DELETE FROM users WHERE username = ? COLLATE NOCASE').bind(username),
-        ]);
+        const account = await findUser(delDb, username);
+        if (!account) return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
+        await delDb.prepare('DELETE FROM users WHERE id = ?').bind(account.user_id).run();
 
         return jsonResponse({ success: true, message: 'Account deleted successfully' });
       }
@@ -687,17 +673,14 @@ export default {
         const password_hash = normHash(
           url.searchParams.get('password_hash') || url.searchParams.get('passwordHash')
         );
-        // Compat: pre-auth app builds pull without a hash. Same rule as POST:
-        // legacy password-less rows still sync; hashed accounts need the hash.
-        // Remove once all clients send password_hash (v187+ app).
         if (!password_hash) {
-          const existing = await findUser(syncDb, username).catch(() => null);
-          if (existing && existing.password_hash) {
-            return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
-          }
-        } else if (!(await checkUserPassword(syncDb, username, password_hash))) {
+          return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
+        }
+        const account = await findUser(syncDb, username);
+        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
           return jsonResponse({ error: 'Invalid credentials' }, 401);
         }
+        const userId = account.user_id;
 
         // Lazy daily sweep; guarded so it can never break/slow the sync.
         // Throttled: the hourly cron owns the sweep (was: claim-write EVERY poll).
@@ -707,16 +690,15 @@ export default {
         }
 
         // Conditional pull: client sends its version; a match answers
-        // { unchanged:true } (two point lookups, zero row reads). null (new
-        // account / pre-versions DB) never matches → full snapshot.
+        // { unchanged:true } (two point lookups, zero row reads).
         // Never cache per-user snapshots in a shared cache (edge/CDN/KV) —
         // the version counter above already IS the cache.
         const clientVersion = url.searchParams.get('version');
         let serverVersion = null;
         try {
           const row = await syncDb
-            .prepare('SELECT version FROM user_versions WHERE username = ? COLLATE NOCASE')
-            .bind(username).first();
+            .prepare('SELECT version FROM split_task_sync_versions WHERE user_id = ?')
+            .bind(userId).first();
           if (row) serverVersion = Number(row.version) || 0;
         } catch { serverVersion = null; }
 
@@ -739,12 +721,11 @@ export default {
         // round-trips. Per-result errors degrade per-table (empty for THAT
         // table only) — the client merge treats each table independently, so a
         // failed table never clobbers the tables that did read.
-        // Usernames compare COLLATE NOCASE: legacy "Cedric" rows still sync as "cedric".
         const stmts = [
-          syncDb.prepare('SELECT * FROM user_settings WHERE username = ? COLLATE NOCASE').bind(username),
-          syncDb.prepare('SELECT * FROM categories WHERE username = ? COLLATE NOCASE').bind(username),
-          syncDb.prepare('SELECT * FROM items WHERE username = ? COLLATE NOCASE').bind(username),
-          syncDb.prepare('SELECT * FROM notes WHERE username = ? COLLATE NOCASE').bind(username),
+          syncDb.prepare('SELECT * FROM split_task_settings WHERE user_id = ?').bind(userId),
+          syncDb.prepare('SELECT * FROM split_task_categories WHERE user_id = ?').bind(userId),
+          syncDb.prepare('SELECT * FROM split_task_items WHERE user_id = ?').bind(userId),
+          syncDb.prepare('SELECT * FROM split_task_notes WHERE user_id = ?').bind(userId),
         ];
         let settings = null, categories = [], items = [], notes = [];
         try {
@@ -767,17 +748,17 @@ export default {
           // the whole sync with a 500.
           console.warn('[sync] batched pull fell back:', err?.message || err);
           const readRows = async (sql) => {
-            try { return (await syncDb.prepare(sql).bind(username).all()).results || []; }
+            try { return (await syncDb.prepare(sql).bind(userId).all()).results || []; }
             catch (e) { console.warn('[sync] table read failed, defaulting empty:', sql, e?.message || e); return []; }
           };
           const readOne = async (sql) => {
-            try { return (await syncDb.prepare(sql).bind(username).first()) || null; }
+            try { return (await syncDb.prepare(sql).bind(userId).first()) || null; }
             catch (e) { console.warn('[sync] settings read failed, defaulting null:', e?.message || e); return null; }
           };
-          settings = await readOne('SELECT * FROM user_settings WHERE username = ? COLLATE NOCASE');
-          categories = await readRows('SELECT * FROM categories WHERE username = ? COLLATE NOCASE');
-          items = await readRows('SELECT * FROM items WHERE username = ? COLLATE NOCASE');
-          notes = await readRows('SELECT * FROM notes WHERE username = ? COLLATE NOCASE');
+          settings = await readOne('SELECT * FROM split_task_settings WHERE user_id = ?');
+          categories = await readRows('SELECT * FROM split_task_categories WHERE user_id = ?');
+          items = await readRows('SELECT * FROM split_task_items WHERE user_id = ?');
+          notes = await readRows('SELECT * FROM split_task_notes WHERE user_id = ?');
         }
         return jsonResponse({
           settings,
@@ -816,28 +797,12 @@ export default {
         const password_hash = normHash(body?.password_hash || body?.passwordHash);
         const { settings, categories, items, notes } = body || {};
         if (!username) return jsonResponse({ error: 'Missing username' }, 400);
-        // Compat: pre-auth app builds push without a hash. If the account has
-        // no password set (legacy row), allow; otherwise require the hash.
-        // Remove once all clients send password_hash (v187+ app).
-        // Canonical username: the users-row spelling (exact case) is used for
-        // ALL writes below. SQLite FKs are case-SENSITIVE even though our
-        // lookups are NOCASE — writing 'cedric' rows under a 'Cedric' users
-        // row (or vice versa) throws FOREIGN KEY constraint failed.
-        let canonical = username;
-        if (!password_hash) {
-          const existing = await findUser(pushDb, username).catch(() => null);
-          if (existing && existing.password_hash) {
-            return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
-          }
-          if (!existing) return jsonResponse({ error: 'Unknown account' }, 401);
-          if (existing && existing.username) canonical = existing.username;
-        } else {
-          const existing = await findUser(pushDb, username).catch(() => null);
-          if (!existing || !timingSafeEqual(existing.password_hash, password_hash)) {
-            return jsonResponse({ error: 'Invalid credentials' }, 401);
-          }
-          canonical = existing.username || username;
+        if (!password_hash) return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
+        const account = await findUser(pushDb, username);
+        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+          return jsonResponse({ error: 'Invalid credentials' }, 401);
         }
+        const userId = account.user_id;
         // Per-user quotas: one abusive account can't fill the 500MB D1.
         if (Array.isArray(items) && items.length > 2000)
           return jsonResponse({ error: 'Too many items (max 2000)' }, 413);
@@ -861,40 +826,6 @@ export default {
         const bool01 = (v) => (v === false || v === 0 ? 0 : 1);
 
         if (settings) {
-          // Lazy migrations: older DBs miss columns the INSERT writes (→ 500).
-          // Cached per-isolate (24h TTL): a settings push must NOT re-run 6
-          // ALTER probes on every write (was: ~6 wasted D1 queries/push).
-          if (Date.now() - schemaCheckedAt >= SCHEMA_CHECK_TTL_MS) {
-            const lazyColumns = [
-            ['is_dim_mode', 'INTEGER NOT NULL DEFAULT 0'],
-            ['future_recurrences', 'INTEGER NOT NULL DEFAULT 2'],
-            ['theme_level', 'INTEGER NOT NULL DEFAULT 0'],
-            ['calendar_days', 'INTEGER NOT NULL DEFAULT 1'],
-            ['week_calendar_days', 'INTEGER NOT NULL DEFAULT 7'],
-            ['app_font', "TEXT NOT NULL DEFAULT 'Inter'"],
-            ['secure_notes_wrapped_key', 'TEXT'],
-          ];
-          let themeLevelJustAdded = false;
-          for (const [col, def] of lazyColumns) {
-            try {
-              await env['ST-DATABASE'].prepare(
-                `ALTER TABLE user_settings ADD COLUMN ${col} ${def}`
-              ).run();
-              if (col === 'theme_level') themeLevelJustAdded = true;
-            } catch (err) {
-              if (!/duplicate column|already exists/i.test(err?.message || '')) throw err;
-            }
-          }
-            schemaCheckedAt = Date.now();
-            if (themeLevelJustAdded) {
-              // Seed the new column from the legacy pair so light/dim users don't
-              // wake up on full dark (the column default is 0).
-              await env['ST-DATABASE'].prepare(
-                'UPDATE user_settings SET theme_level = CASE WHEN is_dim_mode = 1 THEN 1 WHEN is_dark_mode = 1 THEN 0 ELSE 4 END'
-              ).run();
-            }
-          }
-
           // Older clients send no theme_level: derive from the legacy pair so
           // their dark/light choice survives instead of resetting to dark.
           const hasThemeLevel = settings.theme_level !== undefined
@@ -916,8 +847,8 @@ export default {
           ];
 
           await env['ST-DATABASE'].prepare(`
-            INSERT INTO user_settings (
-              username, light_color, dark_color, color_palette, is_dark_mode, is_dim_mode, theme_level,
+            INSERT INTO split_task_settings (
+              user_id, light_color, dark_color, color_palette, is_dark_mode, is_dim_mode, theme_level,
               enable_animations, confetti_enabled, completion_sounds,
               popup_overlay_enabled, page_transitions_enabled, smooth_dropdowns_enabled, deletion_fade_enabled, split_view_shift_enabled, button_feedback_enabled,
               split_task_page, calendar_days, week_calendar_days, week_start, day_start,
@@ -930,7 +861,7 @@ export default {
               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
               ?, ?, ?
             )
-            ON CONFLICT(username) DO UPDATE SET
+            ON CONFLICT(user_id) DO UPDATE SET
               light_color = excluded.light_color,
               dark_color = excluded.dark_color,
               color_palette = excluded.color_palette,
@@ -963,9 +894,10 @@ export default {
               delete_after_days = excluded.delete_after_days,
               task_deadline_push_enabled = excluded.task_deadline_push_enabled,
               app_font = excluded.app_font,
+              secure_notes_wrapped_key = excluded.secure_notes_wrapped_key,
               updated_at = excluded.updated_at
           `).bind(
-            canonical,
+            userId,
             settings.light_color || '#344271',
             // NULL = "use light_color" (schema contract). This used to coerce a
             // missing dark color to '#999999', which showed up as a grey accent
@@ -1018,36 +950,34 @@ export default {
         };
         if (Array.isArray(categories)) {
           const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM categories WHERE username = ? COLLATE NOCASE').bind(canonical),
+            env['ST-DATABASE'].prepare('DELETE FROM split_task_categories WHERE user_id = ?').bind(userId),
           ];
           const nowIso = new Date().toISOString();
           for (const cat of categories) {
             stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO categories (id, username, name, color, updated_at)
+              INSERT INTO split_task_categories (id, user_id, name, color, updated_at)
               VALUES (?, ?, ?, ?, ?)
-              ON CONFLICT(id, username) DO UPDATE SET
+              ON CONFLICT(user_id, id) DO UPDATE SET
                 name = excluded.name,
                 color = excluded.color,
                 updated_at = excluded.updated_at
-            `).bind(cat.id, canonical, cat.name, cat.color, cat.updated_at || nowIso));
+            `).bind(cat.id, userId, cat.name, cat.color, cat.updated_at || nowIso));
           }
           for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
         }
 
         if (Array.isArray(items)) {
-          // due_date is an ALTER column — heal before writing.
-          await ensureItemsDueDateCached(env['ST-DATABASE']);
           const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM items WHERE username = ? COLLATE NOCASE').bind(canonical),
+            env['ST-DATABASE'].prepare('DELETE FROM split_task_items WHERE user_id = ?').bind(userId),
           ];
           const nowIso = new Date().toISOString();
           for (const item of items) {
             stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO items (
-                id, username, type, title, category_id, item_date, done, finished_at, notes,
+              INSERT INTO split_task_items (
+                id, user_id, type, title, category_id, item_date, done, finished_at, notes,
                 deadline, due_date, start_time, end_time, location, recurrence, recurrence_id, updated_at
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id, username) DO UPDATE SET
+              ON CONFLICT(user_id, id) DO UPDATE SET
                 type = excluded.type,
                 title = excluded.title,
                 category_id = excluded.category_id,
@@ -1064,7 +994,7 @@ export default {
                 recurrence_id = excluded.recurrence_id,
                 updated_at = excluded.updated_at
             `).bind(
-              item.id, canonical, item.type || 'task', item.title,
+              item.id, userId, item.type || 'task', item.title,
               item.category_id || 'default', item.item_date,
               item.done ? 1 : 0, item.finished_at || null, item.notes || null,
               item.deadline || null, item.due_date || null, item.start_time || null,
@@ -1079,25 +1009,29 @@ export default {
 
         if (Array.isArray(notes)) {
           const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM notes WHERE username = ? COLLATE NOCASE').bind(canonical),
+            env['ST-DATABASE'].prepare('DELETE FROM split_task_notes WHERE user_id = ?').bind(userId),
           ];
           const nowIso = new Date().toISOString();
           for (const note of notes) {
             if (!note || typeof note.id === 'undefined' || note.id === null) continue;
             stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO notes (
-                id, username, text, category_id, created_at, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id, username) DO UPDATE SET
+              INSERT INTO split_task_notes (
+                id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(user_id, id) DO UPDATE SET
                 text = excluded.text,
                 category_id = excluded.category_id,
                 created_at = excluded.created_at,
-                updated_at = excluded.updated_at
+                updated_at = excluded.updated_at,
+                hidden = excluded.hidden,
+                text_is_encrypted = excluded.text_is_encrypted
             `).bind(
-              String(note.id), canonical, String(note.text ?? ''),
+              String(note.id), userId, String(note.text ?? ''),
               note.category_id ?? null,
               note.created_at || nowIso,
               note.updated_at || nowIso,
+              note.hidden === 1 || note.hidden === '1' ? 1 : 0,
+              note.text_is_encrypted === 1 || note.text_is_encrypted === '1' ? 1 : 0,
             ));
           }
           for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
@@ -1108,9 +1042,9 @@ export default {
         if (settings || Array.isArray(categories) || Array.isArray(items) || Array.isArray(notes)) {
           try {
             await env['ST-DATABASE'].prepare(`
-              INSERT INTO user_versions (username, version) VALUES (?, 1)
-              ON CONFLICT(username) DO UPDATE SET version = version + 1
-            `).bind(canonical).run();
+              INSERT INTO split_task_sync_versions (user_id, version) VALUES (?, 1)
+              ON CONFLICT(user_id) DO UPDATE SET version = version + 1
+            `).bind(userId).run();
           } catch (err) {
             console.warn('[sync] version bump skipped:', err?.message || err);
           }
@@ -1264,4 +1198,3 @@ export default {
     }
   },
 };
-

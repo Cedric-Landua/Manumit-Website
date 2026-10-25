@@ -26,7 +26,8 @@ folder next to this one (`../Split Task`, and the other apps as they arrive).
 │
 ├── scripts/assemble-site.mjs ← build orchestration: apps -> dist/ + shell -> dist/
 ├── worker.js                 ← Cloudflare Worker API backend (/api/*)
-├── schema-d1.sql             ← Cloudflare D1 schema (current)
+├── schema-d1.sql             ← Shared-account Cloudflare D1 schema (current source)
+├── schema-d1-legacy.sql      ← Previous username-keyed schema, retained for rollback
 ├── schema-script.txt         ← legacy MySQL schema, reference only - not for D1
 ├── google852649c4e1572428.html   same verification file, kept next to the build
 │
@@ -79,10 +80,43 @@ https://manumit.studio/help/                  ← support tickets
 https://manumit.studio/policies/              ← Privacy + Terms
 ```
 
-**Backend:** `worker.js` is the Cloudflare Worker behind `api.freeerapps.com`
-(all `/api/*` routes) and `schema-d1.sql` is its D1 database schema. It is
-shared by the website (`/help`, `/admin`) and by every app's sync, so it lives
-here once instead of being copied per app.
+**Backend:** `worker.js` is the single Cloudflare Worker behind the Split Task
+API endpoint (all `/api/*` routes). `schema-d1.sql` defines its shared D1:
+stable Manumit user IDs, login identities, product access, and product-owned
+data tables. `schema-d1-legacy.sql` records the previous username-keyed layout.
+The support-ticket database remains a separate binding.
+
+## Shared-account database cutover
+
+The new Worker and `schema-d1.sql` target a clean D1 database; do not apply the
+new schema to the old live database or deploy the new Worker against the old
+schema. Keep the old D1 available until account login, Split Task sync, and the
+encrypted-note key have been verified against the new database.
+
+`scripts/prepare-split-task-import.py` prepares an SQL import from one selected
+account in the CSV export. The generated SQL contains that account's legacy
+credential hash and app data; keep the file private and delete it after import.
+Pass `--wrapped-key-file` with the recovered `WRAP1` key, and
+`--note-metadata-file` with a private CSV containing
+`username,id,hidden,text_is_encrypted` from the old D1. Do not paste the key or
+private account data into chat or source control. The pre-edit CSV export does
+not contain the wrapped secure-notes key or hidden-note flags. Preserve the old
+D1 and a logged-in device until the key and note state have been recovered and
+checked.
+
+Cutover order:
+
+1. Create a new D1 database; do not repoint the live Worker yet.
+2. Apply `schema-d1.sql` to the new database.
+3. Generate and import the one-account SQL file from the pre-edit CSV export.
+   The import script reports table counts without printing row contents.
+4. Repoint the existing Worker's `ST-DATABASE` binding to the new D1 and deploy
+   this Worker version.
+5. Verify login, pull/push on the retained device, settings, categories, items,
+   notes, and secure-note decryption. Confirm the wrapped key has synced before
+   testing another device.
+6. Keep the old D1 untouched until those checks pass; only then decide whether
+   to remove test accounts or retire the old database.
 
 ## Adding the next app to the website
 
