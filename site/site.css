@@ -1295,7 +1295,7 @@ html[data-theme="dark"] .mm-plate--interface { --plate-ink: #a2a9ff; }
 /* (Liberation experiment removed — original horizon hero restored.) */
 /* (end restore) */
 
-/* ===== Edition picker (Regular / Enterprise slider) on /products/ ===== */
+/* ===== Edition picker (User / Enterprise slider) on /products/ ===== */
 .policies-head {
   display: flex;
   align-items: flex-start;
@@ -1358,7 +1358,7 @@ html[data-theme="dark"] .mm-plate--interface { --plate-ink: #a2a9ff; }
 
 /* Card filtering by edition */
 .pol-card[data-edition] { display: block; }
-body.edition-enterprise .pol-card[data-edition="regular"] { display: none !important; }
+body.edition-enterprise .pol-card[data-edition="user"] { display: none !important; }
 
 /* Mobile: stack the toggle below the heading */
 @media (max-width: 640px) {
