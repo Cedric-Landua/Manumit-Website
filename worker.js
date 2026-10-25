@@ -474,8 +474,11 @@ export default {
     // Native shells / local dev have no real host: match localhost on either
     // scheme, any port (Vite :5173, Capacitor https://localhost). Exact host
     // only — a startsWith check would also admit localhost.evil.com.
-    const isLocalOrigin = /^https?:\/\/localhost(:\d+)?$/.test(origin);
-    const allowOrigin = (ALLOWED_ORIGINS.includes(origin) || isLocalOrigin)
+    const isLocalOrigin = /^https?:\/localhost(:\d+)?$/.test(origin);
+    // Cloudflare Pages preview deployments get unique subdomains (e.g.
+    // f81cb833.freeerapps.pages.dev) — allow all of them.
+    const isPagesPreview = /^https:\/[a-z0-9-]+\.freeerapps\.pages\.dev$/.test(origin);
+    const allowOrigin = (ALLOWED_ORIGINS.includes(origin) || isLocalOrigin || isPagesPreview)
       ? origin : ALLOWED_ORIGINS[0];
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowOrigin,
