@@ -12,6 +12,9 @@ const websiteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const appsRoot = path.dirname(websiteRoot); // the folder holding every app folder
 const siteDir = path.join(websiteRoot, 'site');
 const dist = path.join(websiteRoot, 'dist');
+// Pre-built Split Task app output (committed to this repo) so Cloudflare Pages
+// can deploy the app even though the Split Task source lives in a sibling repo.
+const APP_FALLBACK_ROOT = path.join(websiteRoot, 'site', 'split-task-app');
 
 // Every app on manumit.studio: folder (next to Website/), product (its Vite
 // outDir dist/products/<product>), mount (deploy path; app never occupies
@@ -34,7 +37,10 @@ if (!fs.existsSync(siteDir)) {
 // App deploy path (entry `mount`, else /products/<product>/). Everything
 // under a mount belongs to that app's build — the shell never touches it.
 const appMount = (app) => app.mount || `products/${app.product}`;
-const appRoot = (app) => path.join(appsRoot, app.folder);
+const appRoot = (app) => {
+  const r = path.join(appsRoot, app.folder);
+  return fs.existsSync(r) ? r : APP_FALLBACK_ROOT;
+};
 const appBuild = (app) => path.join(appRoot(app), 'dist', 'products', app.product);
 const mounts = APPS.map((app) => path.resolve(dist, appMount(app)));
 const insideMount = (p) => mounts.some((m) => p === m || p.startsWith(m + path.sep));
@@ -42,13 +48,11 @@ const insideMount = (p) => mounts.some((m) => p === m || p.startsWith(m + path.s
 // 1. Build + verify every app first: a failure leaves dist/ untouched.
 // `--no-build` skips app builds and only re-composes dist/.
 for (const app of APPS) {
+  const sourceRoot = path.join(appsRoot, app.folder);
   const root = appRoot(app);
-  if (!fs.existsSync(root)) {
-    console.warn(`[assemble] app folder not found: ${root} - skipping "${app.folder}" (not in this checkout)`);
-    continue;
-  }
+  const isFallback = !fs.existsSync(sourceRoot);
 
-  if (!skipAppBuild) {
+  if (!skipAppBuild && !isFallback) {
     console.log(`[assemble] building "${app.folder}" ...`);
     // Shell:true resolves npm.cmd on Windows; single string avoids DEP0190.
     const build = spawnSync('npm run build', {
