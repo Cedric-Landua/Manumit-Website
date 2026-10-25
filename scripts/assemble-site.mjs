@@ -44,8 +44,8 @@ const insideMount = (p) => mounts.some((m) => p === m || p.startsWith(m + path.s
 for (const app of APPS) {
   const root = appRoot(app);
   if (!fs.existsSync(root)) {
-    console.error(`[assemble] app folder not found: ${root}`);
-    process.exit(1);
+    console.warn(`[assemble] app folder not found: ${root} - skipping "${app.folder}" (not in this checkout)`);
+    continue;
   }
 
   if (!skipAppBuild) {
@@ -77,6 +77,11 @@ fs.mkdirSync(dist, { recursive: true });
 //    around the apps, incl. each product page; the deeper mount keeps a copy
 //    from ever clobbering a fresh app build).
 for (const app of APPS) {
+  const built = appBuild(app);
+  if (!fs.existsSync(built)) {
+    console.warn(`[assemble] no build for "${app.folder}" - not mounting ${appMount(app)}`);
+    continue;
+  }
   const target = path.join(dist, appMount(app));
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(target), { recursive: true });
