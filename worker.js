@@ -477,7 +477,7 @@ export default {
     const isLocalOrigin = /^https?:\/\/localhost(:\d+)?$/.test(origin);
     // Cloudflare Pages preview deployments get unique subdomains (e.g.
     // f81cb833.freeerapps.pages.dev) — allow all of them.
-    const isPagesPreview = /^https:\\/[a-z0-9-]+\.freeerapps\.pages\.dev$/.test(origin);
+    const isPagesPreview = /^https:\/\/[a-z0-9-]+\.freeerapps\.pages\.dev$/.test(origin);
     const allowOrigin = (ALLOWED_ORIGINS.includes(origin) || isLocalOrigin || isPagesPreview)
       ? origin : ALLOWED_ORIGINS[0];
     const corsHeaders = {
@@ -1001,7 +1001,8 @@ export default {
             settings.split_ratio || 0.5,
             settings.delete_after_days || 30,
             bool01(settings.task_deadline_push_enabled),
-            APP_FONT_LABELS.includes(settings.app_font) ? settings.app_font : 'Inter',\n            settings.secure_notes_wrapped_key ?? null,
+            APP_FONT_LABELS.includes(settings.app_font) ? settings.app_font : 'Inter',
+            settings.secure_notes_wrapped_key ?? null,
             settings.updated_at || new Date().toISOString(),
           ).run();
         }
