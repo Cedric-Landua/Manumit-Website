@@ -1,7 +1,7 @@
 // Shared site helpers (manumit.studio shell, vanilla JS). Load first:
 // <script defer src="/shared.js"></script> → window.FE.
 (function () {
-  var API_BASE = 'https://split-task-api.landua-cedric.workers.dev';
+  var API_BASE = 'https://manumit-api.landua-cedric.workers.dev';
   var CONTACT_EMAIL = 'freeerapps.dev@gmail.com';
   function sha256(str) {
     return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (buf) {

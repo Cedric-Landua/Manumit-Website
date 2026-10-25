@@ -2,7 +2,7 @@
 // typical estimates rendered as an animated map. No user-triggered ping.
 // Status refreshes quietly every 60 s; map animates continuously.
 (function () {
-  var API = (window.FE && window.FE.API_BASE) || 'https://split-task-api.landua-cedric.workers.dev';
+  var API = (window.FE && window.FE.API_BASE) || 'https://manumit-api.landua-cedric.workers.dev';
   var HUB = { id: 'hub', label: 'Core hub', x: 150, y: 215 };
   var REGIONS = [
     { id: 'us-central', label: 'US Central', x: 158, y: 128, ms: 35 },
@@ -171,4 +171,3 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
-
