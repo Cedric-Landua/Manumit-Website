@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>(function(){try{var t=localStorage.getItem('theme');if((t==='light'||t==='dark')&&window.matchMedia('(min-width:641px)').matches){document.documentElement.setAttribute('data-theme',t);}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manumit · Free apps. Done well. Built for privacy</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <meta name="theme-color" content="#344271" />
+    <link rel="canonical" href="https://freeerapps.com/" />
+    <meta property="og:title" content="Free apps. Done well. Built for privacy · Free-er Apps" />
+    <meta property="og:description" content="Quality apps, completely free, with optional, encrypted, cloud-syncing, zero unwanted data use." />
+    <meta property="og:image" content="https://freeerapps.com/icon.png" />
+    <meta property="og:image:alt" content="Free-er Apps logo" />
+    <meta property="og:url" content="https://freeerapps.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Free-er Apps" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free apps. Done well. Built for privacy · Free-er Apps" />
+    <meta name="twitter:description" content="Quality apps, completely free, with optional, encrypted, cloud-syncing, zero unwanted data use." />
+    <meta name="twitter:image" content="https://freeerapps.com/icon.png" />
+    <meta name="description" content="Quality apps, completely free, with optional, encrypted, cloud-syncing, zero unwanted data use." />
+    <link rel="stylesheet" href="/site.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Free-er Apps",
+      "url": "https://freeerapps.com/",
+      "description": "Quality apps, completely free, with optional, encrypted, cloud-syncing, zero unwanted data use.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Free-er Apps",
+        "url": "https://freeerapps.com/",
+        "logo": { "@type": "ImageObject", "url": "https://freeerapps.com/icon.png" },
+        "email": "freeerapps.dev@gmail.com"
+      }
+    }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+                        <a class="brand" href="/">Free-er Apps</a>
+        <nav>
+          <a href="/" class="active">Home</a>
+          <div class="nav-drop">
+            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/products/split-task/">Split Task</a>
+            </div>
+          </div>
+          <div class="nav-drop">
+            <a href="/policies/" class="drop-toggle">Policies <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/policies/privacy/">Privacy Policy</a>
+              <a href="/policies/eula/">EULA</a>
+            </div>
+          </div>
+        </nav>
+        <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page mm-home">
+      <section class="mm-hero">
+        <div class="mm-hero-bg" aria-hidden="true"></div>
+        <div class="mm-hero-inner">
+        <div class="hero-copy">
+          <span class="eyebrow mm-eyebrow"><span class="mm-dot"></span>Manumit · Independent development</span>
+          <h1>Free apps.<br />Done well.<br /><span class="mm-grad">Built for privacy.</span></h1>
+          <p class="mm-lede">Quality apps, completely free — local-first, encrypted when synced, with zero ads, zero paywalls, and zero data selling.</p>
+          <div class="actions mm-actions">
+            <a class="btn primary mm-cta" href="/products/">Explore apps</a>
+            <a class="btn secondary mm-ghost" href="/policies/">Read my policies</a>
+            <a class="btn bmc" href="https://buymeacoffee.com/free.erapps" target="_blank" rel="noopener">
+              <svg class="bmc-logo" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.299-.033.598-.073.896-.119.352-.054.578-.513.474-.834-.124-.383-.457-.531-.834-.473-.466.074-.96.108-1.382.146-1.177.08-2.358.082-3.536.006a22.228 22.228 0 01-1.157-.107c-.086-.01-.18-.025-.258-.036-.243-.036-.484-.08-.724-.13-.111-.027-.111-.185 0-.212h.005c.277-.06.557-.108.838-.147h.002c.131-.009.263-.032.394-.048a25.076 25.076 0 013.426-.12c.674.019 1.347.067 2.017.144l.228.031c.267.04.533.088.798.145.392.085.895.113 1.07.542.055.137.08.288.111.431l.319 1.484a.237.237 0 01-.199.284h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 01-4.743.295 37.059 37.059 0 01-4.699-.304c-.14-.017-.293-.042-.417-.06-.326-.048-.649-.108-.973-.161-.393-.065-.768-.032-1.123.161-.29.16-.527.404-.675.701-.154.316-.199.66-.267 1-.069.34-.176.707-.135 1.056.087.753.613 1.365 1.37 1.502a39.69 39.69 0 0011.343.376.483.483 0 01.535.53l-.071.697-1.018 9.907c-.041.41-.047.832-.125 1.237-.122.637-.553 1.028-1.182 1.171-.577.131-1.165.2-1.756.205-.656.004-1.31-.025-1.966-.022-.699.004-1.556-.06-2.095-.58-.475-.458-.54-1.174-.605-1.793l-.731-7.013-.322-3.094c-.037-.351-.286-.695-.678-.678-.336.015-.718.3-.678.679l.228 2.185.949 9.112c.147 1.344 1.174 2.068 2.446 2.272.742.12 1.503.144 2.257.156.966.016 1.942.053 2.892-.122 1.408-.258 2.465-1.198 2.616-2.657.34-3.332.683-6.663 1.024-9.995l.215-2.087a.484.484 0 01.39-.426c.402-.078.787-.212 1.074-.518.455-.488.546-1.124.385-1.766zm-1.478.772c-.145.137-.363.201-.578.233-2.416.359-4.866.54-7.308.46-1.748-.06-3.477-.254-5.207-.498-.17-.024-.353-.055-.47-.18-.22-.236-.111-.71-.054-.995.052-.26.152-.609.463-.646.484-.057 1.046.148 1.526.22.577.088 1.156.159 1.737.212 2.48.226 5.002.19 7.472-.14.45-.06.899-.13 1.345-.21.399-.072.84-.206 1.08.206.166.281.188.657.162.974a.544.544 0 01-.169.364zm-6.159 3.9c-.862.37-1.84.788-3.109.788a5.884 5.884 0 01-1.569-.217l.877 9.004c.065.78.717 1.38 1.5 1.38 0 0 1.243.065 1.658.065.447 0 1.786-.065 1.786-.065.783 0 1.434-.6 1.499-1.38l.94-9.95a3.996 3.996 0 00-1.322-.238c-.826 0-1.491.284-2.26.613z" /></svg>
+              <span class="bmc-label">Donate</span>
+            </a>
+          </div>
+        </div>
+        <div class="hero-panel mm-panel">
+          <span class="hero-panel-label">The Manumit standard</span>
+          <ul>
+            <li><strong>$0</strong><span>forever — no paywalls, no ads</span></li>
+            <li><strong>Private</strong><span>local-first, encrypted sync</span></li>
+            <li><strong>Polished</strong><span>one developer, high bar</span></li>
+          </ul>
+          <a class="mm-panel-link" href="/products/split-task/">Try Split Task →</a>
+        </div>
+        </div>
+      </section>
+
+      <section class="mm-net" aria-label="Network status">
+        <div class="mm-net-head">
+          <span class="mm-live"><span class="mm-live-dot" id="mm-live-dot"></span><span id="mm-live-text">Checking status…</span></span>
+          <h2>Live from the edge.</h2>
+          <p>Uptime is reported by the server. Latencies are typical estimates per region — refreshed quietly in the background.</p>
+        </div>
+        <div class="mm-net-grid">
+          <div class="mm-net-readout">
+            <div class="mm-up"><strong id="mm-up">—</strong><span id="mm-up-label">uptime · last 24h</span>
+              <div class="mm-range" role="group" aria-label="Uptime range">
+                <button type="button" data-range="24h" class="mm-range-btn mm-range-on" aria-pressed="true">24h</button>
+                <button type="button" data-range="7d" class="mm-range-btn" aria-pressed="false">7d</button>
+                <button type="button" data-range="30d" class="mm-range-btn" aria-pressed="false">30d</button>
+                <button type="button" data-range="1y" class="mm-range-btn" aria-pressed="false">1y</button>
+                <button type="button" data-range="all" class="mm-range-btn" aria-pressed="false">All</button>
+              </div>
+            </div>
+            <div class="mm-ping"><strong id="mm-ping">—</strong><span id="mm-ping-label">typical US latency</span></div>
+          </div>
+          <div class="mm-map" role="img" aria-label="World map with estimated latency per region">
+            <svg viewBox="0 0 640 320" aria-hidden="true">
+              <rect x="8" y="8" width="624" height="304" rx="18" class="mm-map-bg" />
+              <g class="mm-dots" id="mm-dots"></g>
+              <g class="mm-map-links" id="mm-links"></g>
+              <g id="mm-nodes"></g>
+            </svg>
+            <ul class="mm-regions" id="mm-regions"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="goals mm-pillars" id="goals">
+        <div class="section-head">
+          <span class="eyebrow">Why Manumit</span>
+          <h2>Software that sets you free.</h2>
+          <p>Three commitments shape everything I build — no compromises, no fine print.</p>
+        </div>
+        <div class="goal-grid mm-grid">
+          <div class="goal-card mm-card">
+            <div class="mm-icon" aria-hidden="true">◈</div>
+            <h3>Free entirely</h3>
+            <p>Every app is completely unlocked. No paywalls, no ads, no premium tiers. The price is zero and always will be.</p>
+          </div>
+          <div class="goal-card mm-card">
+            <div class="mm-icon" aria-hidden="true">⬢</div>
+            <h3>Quality, not cheap</h3>
+            <p>Free never means cut corners. Every release is polished, tested, and held to the same high bar.</p>
+          </div>
+          <div class="goal-card mm-card">
+            <div class="mm-icon" aria-hidden="true">⬣</div>
+            <h3>Privacy by default</h3>
+            <p>Local-first wherever possible, encrypted when optional sync is used, and permanently deletable at any time.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="mm-spotlight">
+        <div class="mm-spot-copy">
+          <span class="eyebrow">Flagship app</span>
+          <h2>Split Task — plan days, weeks, and months on one screen.</h2>
+          <p>Tasks and events with categories, notifications, and optional encrypted sync. Free forever, on web and Android.</p>
+          <div class="actions">
+            <a class="btn primary" href="/products/split-task/">Explore Split Task</a>
+            <a class="btn secondary" href="/products/split-task/app/">Launch the app</a>
+          </div>
+        </div>
+        <div class="mm-spot-visual" aria-hidden="true">
+          <div class="mm-mock"><span></span><span></span><span></span><span></span></div>
+        </div>
+      </section>
+
+      <section class="stack mm-stack" id="tech-stack">
+        <div class="section-head">
+          <span class="eyebrow">Built on the edge</span>
+          <h2>One global platform, end to end.</h2>
+          <p>From tap to database — modern tools on one global edge network.</p>
+        </div>
+        <div class="stack-grid">
+          <a class="stack-item stack-item--cloudflare" href="https://www.cloudflare.com/" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727" /></svg>
+              </span>
+              <h3>Cloudflare</h3>
+            </div>
+            <p>Workers serve the API, D1 holds the database, and Pages hosts the site - one edge platform end to end.</p>
+            <ul class="stack-tags">
+              <li>Workers</li>
+              <li>D1</li>
+              <li>Pages</li>
+            </ul>
+          </a>
+
+          <a class="stack-item stack-item--resend" href="https://resend.com/" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.679 0c4.648 0 7.413 2.765 7.413 6.434s-2.765 6.434-7.413 6.434H12.33L24 24h-8.245l-8.88-8.44c-.636-.588-.93-1.273-.93-1.86 0-.831.587-1.565 1.713-1.883l4.574-1.224c1.737-.465 2.936-1.81 2.936-3.572 0-2.153-1.761-3.4-3.939-3.4H0V0z" /></svg>
+              </span>
+              <h3>Resend</h3>
+            </div>
+            <p>Sends the confirmation email whenever a support ticket lands, so nobody is left guessing.</p>
+            <ul class="stack-tags">
+              <li>Email API</li>
+              <li>Templates</li>
+            </ul>
+          </a>
+
+          <a class="stack-item stack-item--capacitor" href="https://capacitorjs.com/" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 3.7l-5.766 5.766 5.725 5.736-3.713 3.712L5.073 3.742 8.786.03l5.736 5.726L20.284 0 24 3.7zM.029 8.785l3.713-3.713 15.173 15.173-3.713 3.714-5.732-5.726L3.7 24 0 20.285l5.754-5.764L.029 8.785z" /></svg>
+              </span>
+              <h3>Capacitor</h3>
+            </div>
+            <p>Wraps the same web build in a native shell, so it also ships as an Android app.</p>
+            <ul class="stack-tags">
+              <li>Capacitor 6</li>
+              <li>Android</li>
+            </ul>
+          </a>
+
+          <a class="stack-item stack-item--react" href="https://react.dev/" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z" /></svg>
+              </span>
+              <h3>React</h3>
+            </div>
+            <p>Component-driven interface, with hooks handling all state.</p>
+            <ul class="stack-tags">
+              <li>React 18</li>
+              <li>Hooks</li>
+            </ul>
+          </a>
+
+          <a class="stack-item stack-item--vite" href="https://github.com/vitejs/vite/blob/main/LICENSE" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.056 23.238a.57.57 0 0 1-1.02-.355v-5.202c0-.63-.512-1.143-1.144-1.143H5.148a.57.57 0 0 1-.464-.903l3.777-5.29c.54-.753 0-1.804-.93-1.804H.57a.574.574 0 0 1-.543-.746.6.6 0 0 1 .08-.157L5.008.78a.57.57 0 0 1 .467-.24h14.589a.57.57 0 0 1 .466.903l-3.778 5.29c-.54.755 0 1.806.93 1.806h5.745c.238 0 .424.138.513.322a.56.56 0 0 1-.063.603z" /></svg>
+              </span>
+              <h3>Vite</h3>
+            </div>
+            <p>Builds and serves the web app during development.</p>
+            <ul class="stack-tags">
+              <li>Vite 5</li>
+              <li>ES Modules</li>
+            </ul>
+          </a>
+
+          <a class="stack-item stack-item--webcrypto" href="https://www.w3.org/TR/WebCryptoAPI/" target="_blank" rel="noopener">
+            <div class="stack-head">
+              <span class="stack-logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm3 8H9V7a3 3 0 1 1 6 0v3zm-3 5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" /></svg>
+              </span>
+              <h3>Web Crypto</h3>
+            </div>
+            <p>Hashes passwords with SHA-256 on-device, so nothing leaves in plain text.</p>
+            <ul class="stack-tags">
+              <li>SHA-256</li>
+            </ul>
+          </a>
+        </div>
+
+        <div class="portfolio-strip mm-cta">
+          <div class="portfolio-copy">
+            <h3>Build without boundaries.</h3>
+            <p>One developer, one mission: software that respects you. Explore the story, the work, and what's next.</p>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="https://cedric-landua.pages.dev/" target="_blank" rel="noopener">View my portfolio</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact-strip mm-contact">
+        <div class="contact-head">
+          <h2>Questions? You talk to the developer.</h2>
+          <p>No bots, no queues — a human reply, every time.</p>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="https://mail.google.com/mail/?view=cm&fs=1&to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">Email me</a>
+          <a class="btn secondary" href="/help/">Submit a ticket</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid">
+        <div class="col">
+          <h2>Free-er Apps</h2>
+          <div class="blurb">Independent development where free, quality, and privacy are the priority</div>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
+        </div>
+        <div class="col">
+          <h2>Products</h2>
+          <a href="/products/">Browse</a>
+          <a href="/products/split-task/">Split Task</a>
+        </div>
+        <div class="col">
+          <h2>Site</h2>
+          <a href="/">Home</a>
+          <a href="/products/">Products</a>
+        </div>
+        <div class="col">
+          <h2>Legal</h2>
+          <a href="/policies/">Policies</a>
+          <a href="/policies/privacy/">Privacy Policy</a>
+          <a href="/policies/eula/">EULA</a>
+        </div>
+      </div>
+      <div class="bottom">Free-er Apps · All rights reserved · Site v88</div>
+    </footer>
+
+    <script defer src="/shared.js"></script>
+    <script defer src="/nav.js"></script>
+    <script defer src="/status.js"></script>
+    <script defer src="/help-widget.js"></script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+# Manumit
+
+> Independent software studio building completely free, privacy-first apps.
+> Name means "to set free" — freeing users from paywalls, ads, and tracking.
+
+## Who we are
+
+- Studio: Manumit — https://manumit.studio/
+- Founder: Cedric Landua (solo independent developer) — https://cedric-landua.pages.dev/
+- Contact: freeerapps.dev@gmail.com (human replies, no bots)
+- Support: https://manumit.studio/help/ (ticket form: support, bugs, other)
+- Promise: Quality. Private. Free.
+
+## What we do
+
+- Free Software Development: every app completely unlocked, $0 forever
+- Privacy-First App Design: zero tracking, no ads, no paywalls, deletable anytime
+- Encrypted Cloud Sync: optional, end-to-end encrypted, works offline-first
+- Productivity Apps: task management, planning, focus tools
+- User Interface Design: clean, human-reviewed, accessible
+- Cross-Platform App Development: web + Android (Capacitor), Cloudflare stack
+
+## Products
+
+- [Split Task](https://manumit.studio/products/split-task/): break big goals into small steps. Free planner with auto-splitting, encrypted sync, offline support. Live app: https://manumit.studio/products/split-task/app/
+- All products: https://manumit.studio/products/
+
+## Key pages
+
+- Home: https://manumit.studio/
+- Products: https://manumit.studio/products/
+- Help & Support: https://manumit.studio/help/
+- Policies: https://manumit.studio/policies/ (Privacy + EULA)
+
+## Principles
+
+1. No paywalls — every feature free, no premium tiers
+2. Your data stays yours — zero tracking, optional encrypted sync
+3. Quality is not negotiable — free software outperforming paid alternatives
+4. Made for everyone — accessible, human-supported
+
+## Tech
+
+Cloudflare Pages + Workers + D1, offline-first, content-hashed static shell.

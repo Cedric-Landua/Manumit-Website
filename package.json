@@ -1,0 +1,11 @@
+{
+  "name": "freeerapps-website",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "manumit.studio - static site shell + Cloudflare Worker API, composed into dist/",
+  "scripts": {
+    "build": "node scripts/assemble-site.mjs",
+    "assemble": "node scripts/assemble-site.mjs --no-build"
+  }
+}

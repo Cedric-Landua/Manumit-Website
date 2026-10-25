@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>(function(){try{var t=localStorage.getItem('theme');if((t==='light'||t==='dark')&&window.matchMedia('(min-width:641px)').matches){document.documentElement.setAttribute('data-theme',t);}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Help & Support - Manumit</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <meta name="theme-color" content="#344271" />
+    <link rel="canonical" href="https://manumit.studio/help/" />
+    <meta property="og:title" content="Help & Support - Manumit" />
+    <meta property="og:description" content="Submit a support ticket or get help from Manumit. Report a bug, ask a question, or request support." />
+    <meta property="og:image" content="https://manumit.studio/icon.png" />
+    <meta property="og:image:alt" content="Manumit logo" />
+    <meta property="og:url" content="https://manumit.studio/help/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Manumit" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Help & Support - Manumit" />
+    <meta name="twitter:description" content="Submit a support ticket or get help from Manumit." />
+    <meta name="twitter:image" content="https://manumit.studio/icon.png" />
+    <meta name="description" content="Submit a support ticket or get help from Manumit. Report a bug, ask a question, or request support." />
+    <link rel="stylesheet" href="/site.css?v=139" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "Manumit",
+          "url": "https://manumit.studio/",
+          "description": "Independent development where free, quality, and privacy carry equal weight.",
+          "publisher": { "@id": "https://manumit.studio/#business" }
+        },
+        {
+          "@id": "https://manumit.studio/#business",
+          "@type": "ProfessionalService",
+          "name": "Manumit",
+          "url": "https://manumit.studio/",
+          "slogan": "Free apps. Done well. Built for privacy",
+          "description": "Independent software studio building completely free apps with zero tracking and optional encrypted cloud sync. Human support from the solo developer.",
+          "email": "freeerapps.dev@gmail.com",
+          "founder": {
+            "@type": "Person",
+            "name": "Cedric Landua",
+            "url": "https://cedric-landua.pages.dev/",
+            "jobTitle": "Independent Developer"
+          },
+          "logo": { "@type": "ImageObject", "url": "https://manumit.studio/icon.png" },
+          "priceRange": "Free",
+          "knowsAbout": ["Free Software Development", "Privacy-First App Design", "Encrypted Cloud Sync", "Productivity Apps", "Customer Support", "Bug Resolution"],
+          "sameAs": ["https://cedric-landua.pages.dev/"]
+        },
+        {
+          "@type": "ContactPage",
+          "name": "Help & Support - Manumit",
+          "url": "https://manumit.studio/help/",
+          "description": "Submit a support ticket or get help from Manumit. Report a bug, ask a question, or request support.",
+          "about": { "@id": "https://manumit.studio/#business" }
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+                        <a class="brand" href="/">Manumit</a>
+        <nav aria-label="Site">
+          <a href="/">Home</a>
+          <div class="nav-drop">
+            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/products/split-task/">Split Task</a>
+            </div>
+          </div>
+          <div class="nav-drop">
+            <a href="/policies/" class="drop-toggle">Policies <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/policies/privacy/">Privacy Policy</a>
+              <a href="/policies/eula/">EULA</a>
+            </div>
+          </div>
+        </nav>
+        <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page">
+      <!-- SITE-ONLY /help ticket page. NOT the in-app SupportScreen
+           (src/components/SupportScreen.jsx, React). Both submit to the same
+           Worker /api/tickets endpoint but are separate codebases — edit here
+           for the website only, edit SupportScreen.jsx for the app only. -->
+      <div class="help-head">
+        <h1>Help & Support</h1>
+      </div>
+
+      <div class="help-page-form" id="help-ticket-container">
+        <form class="help-form" id="help-ticket-form">
+          <div>
+            <label class="help-form-label" for="help-type">Type of request</label>
+            <select id="help-type">
+              <option value="support">Customer support</option>
+              <option value="bug">Bug</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="help-form-label" for="help-name">Your username (optional)</label>
+            <input type="text" id="help-name" placeholder="Split Task username, if you have one" />
+          </div>
+
+          <div id="help-email-row" style="display: none;">
+            <label class="help-form-label" for="help-email">Contact email <span class="required-star">*</span></label>
+            <input type="email" id="help-email" placeholder="you@example.com" />
+          </div>
+
+          <div>
+            <label class="help-form-label" for="help-message">Message <span class="required-star">*</span></label>
+            <textarea id="help-message" required maxlength="5000" placeholder="Describe your issue or question..."></textarea>
+          </div>
+
+          <button type="submit" class="help-form-submit">Send</button>
+
+          <div class="help-form-message" id="help-form-message" style="display: none;"></div>
+        </form>
+      </div>
+      <button type="button" class="admin-login-link" id="admin-login-btn">Administrative login</button>
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid">
+        <div class="col">
+          <h2>Manumit</h2>
+          <div class="blurb">Independent development where free, quality, and privacy are the priorities.</div>
+          <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
+        </div>
+        <div class="col">
+          <h2>Products</h2>
+          <a href="/products/">Browse</a>
+          <a href="/products/split-task/">Split Task</a>
+        </div>
+        <div class="col">
+          <h2>Site</h2>
+          <a href="/">Home</a>
+          <a href="/products/">Products</a>
+        </div>
+        <div class="col">
+          <h2>Legal</h2>
+          <a href="/policies/">Policies</a>
+          <a href="/policies/privacy/">Privacy Policy</a>
+          <a href="/policies/eula/">EULA</a>
+        </div>
+      </div>
+      <div class="bottom">© 2026 Manumit · All rights reserved</div>
+    </footer>
+    <script defer src="/shared.js"></script>
+    <script defer src="/nav.js"></script>
+    <script defer src="/help.js"></script>
+    <script defer src="/admin.js"></script>
+    <script defer src="/help-widget.js"></script>
+  </body>
+</html>

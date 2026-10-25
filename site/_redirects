@@ -1,0 +1,40 @@
+# Deploy rules - Cloudflare Pages reads this at the deploy root.
+#
+# Dual domain: this project is served under BOTH manumit.studio (primary brand)
+# and freeerapps.com (kept working as an alias). Attach both as custom domains
+# on the same Pages project - all navigation below is relative and the API uses
+# a domain-agnostic workers.dev origin (CORS '*'), so nothing here is
+# host-specific and both domains serve identically.
+#
+# App deep links: the Split Task web app lives at /products/split-task/app/ and is
+# a single-page React app, so its three pre-login routes are served that app's own
+# index.html. These are EXACT paths only - assets, /products/, /help/, /policies/
+# and everything else keep being served normally.
+#
+# The trailing-slash forms redirect to the no-slash URL first: the app's asset URLs
+# are relative (./assets/...), so served one directory deeper they would resolve
+# under the route instead of the app folder.
+#
+# Legacy paths: the app used to be served from /products/split-task/*, which is now
+# the Split Task product page, so the old deep links forward to the app.
+/products/split-task/login     /products/split-task/app/login     301
+/products/split-task/login/    /products/split-task/app/login     301
+/products/split-task/signup    /products/split-task/app/signup    301
+/products/split-task/signup/   /products/split-task/app/signup    301
+/products/split-task/delete    /products/split-task/app/delete    301
+/products/split-task/delete/   /products/split-task/app/delete    301
+
+/products/split-task/app/login/    /products/split-task/app/login    301
+/products/split-task/app/signup/   /products/split-task/app/signup   301
+/products/split-task/app/delete/   /products/split-task/app/delete   301
+
+/products/split-task/app/login     /products/split-task/app/index.html   200
+/products/split-task/app/signup    /products/split-task/app/index.html   200
+/products/split-task/app/delete    /products/split-task/app/index.html   200
+
+# There is deliberately NO rule for the bare app root (/products/split-task/app).
+# A source without a trailing slash also matches the deeper app paths below it,
+# and the top-most match wins - a rule there would bounce /app/delete (and
+# /app/login) up to /app/, where the app boots on the plain login screen and
+# rewrites the URL to /app/login. Pages already serves /app/ for the bare path
+# on its own, so nothing is lost by leaving it out.
