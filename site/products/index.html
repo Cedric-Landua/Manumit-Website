@@ -80,12 +80,19 @@
         <span class="human-badge-tip" role="tooltip">Human-reviewed. Every word was written or reviewed by a real person.</span>
       </span>
       <div class="policies-head">
-        <h1>Products</h1>
-        <p class="lede">Every app we make is free, polished, and private by design.</p>
+        <div class="head-text">
+          <h1>Products</h1>
+          <p class="lede">Every app we make is free, polished, and private by design.</p>
+        </div>
+        <div class="edition-picker" role="group" aria-label="Software edition">
+          <button type="button" class="edition-btn active" data-edition="regular">Regular</button>
+          <button type="button" class="edition-btn" data-edition="enterprise">Enterprise</button>
+          <span class="edition-thumb" aria-hidden="true"></span>
+        </div>
       </div>
 
       <div class="card-grid">
-        <a class="policy-card pol-card prod-card--brand" href="/products/split-task/">
+        <a class="policy-card pol-card prod-card--brand" data-edition="regular" href="/products/split-task/">
           <div class="pol-card-glow" aria-hidden="true"></div>
           <div class="card-top">
             <span class="pol-card-icon" aria-hidden="true">
@@ -104,7 +111,7 @@
           <span class="card-link">App page: policies, about &amp; use <!-- <svg class="pol-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> --></span>
         </a>
 
-        <div class="policy-card pol-card prod-card--draft prod-card--soon">
+        <div class="policy-card pol-card prod-card--draft prod-card--soon" data-edition="enterprise">
           <div class="card-top">
             <span class="pol-card-icon" aria-hidden="true">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M18 16l.9 2.1L21 19l-2.1.9L18 22l-.9-2.1L15 19l2.1-.9z"/></svg>
@@ -164,5 +171,20 @@
     <script defer src="/shared.js"></script>
     <script defer src="/nav.js"></script>
     <script defer src="/help-widget.js"></script>
+    <script>
+      (function () {
+        var picker = document.querySelector('.edition-picker');
+        var btns = picker && picker.querySelectorAll('.edition-btn');
+        if (!picker || !btns) return;
+        btns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var edition = btn.getAttribute('data-edition');
+            btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+            picker.setAttribute('data-active', edition);
+            document.body.className = 'edition-' + edition;
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

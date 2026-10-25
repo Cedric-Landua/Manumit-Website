@@ -1294,3 +1294,74 @@ html[data-theme="dark"] .mm-plate--interface { --plate-ink: #a2a9ff; }
 
 /* (Liberation experiment removed — original horizon hero restored.) */
 /* (end restore) */
+
+/* ===== Edition picker (Regular / Enterprise slider) on /products/ ===== */
+.policies-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.policies-head .head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.edition-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 4px;
+  position: relative;
+  isolation: isolate;
+  min-width: fit-content;
+}
+.edition-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 90px;
+  height: 32px;
+  background: var(--brand);
+  border-radius: 26px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s ease;
+  z-index: 1;
+}
+.edition-picker .edition-btn {
+  position: relative;
+  z-index: 2;
+  padding: 8px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  background: transparent;
+  border: none;
+  border-radius: 26px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.edition-picker .edition-btn.active {
+  color: #fff;
+}
+.edition-picker .edition-btn:hover:not(.active) {
+  color: var(--text);
+}
+.edition-picker[data-active="enterprise"] .edition-thumb {
+  transform: translateX(100%);
+}
+
+/* Card filtering by edition */
+.pol-card[data-edition] { display: block; }
+body.edition-enterprise .pol-card[data-edition="regular"],
+body.edition-regular .pol-card[data-edition="enterprise"] { display: none !important; }
+
+/* Mobile: stack the toggle below the heading */
+@media (max-width: 640px) {
+  .policies-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .policies-head .head-text { width: 100%; }
+}
