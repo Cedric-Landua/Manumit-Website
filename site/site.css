@@ -1353,7 +1353,7 @@ html[data-theme="dark"] .mm-plate--interface { --plate-ink: #a2a9ff; }
   color: var(--text);
 }
 .edition-picker[data-active="enterprise"] .edition-thumb {
-  transform: translateX(100%);
+  transform: translateX(calc(100% + 8px));
 }
 
 /* Card filtering by edition */
