@@ -32,9 +32,14 @@
 /products/split-task/app/signup    /products/split-task/app/index.html   200
 /products/split-task/app/delete    /products/split-task/app/index.html   200
 
-# There is deliberately NO rule for the bare app root (/products/split-task/app).
-# A source without a trailing slash also matches the deeper app paths below it,
-# and the top-most match wins - a rule there would bounce /app/delete (and
-# /app/login) up to /app/, where the app boots on the plain login screen and
-# rewrites the URL to /app/login. Pages already serves /app/ for the bare path
-# on its own, so nothing is lost by leaving it out.
+# Bare app root (no trailing slash → trailing slash → index.html)
+/products/split-task/app           /products/split-task/app/             301
+/products/split-task/app/          /products/split-task/app/index.html   200
+
+# SPA catch-all: any other app route falls back to index.html so client-side
+# routing works on direct deep links. Placed after specific rules so those win
+# first; existing static assets (./assets/...) are served directly.
+/products/split-task/app/*         /products/split-task/app/index.html   200
+
+# There is deliberately NO broader catch-all beyond the app mount — the shell
+# owns /products/, /help/, /policies/ and everything else at the site level.
