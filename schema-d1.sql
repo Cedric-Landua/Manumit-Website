@@ -148,6 +148,7 @@ CREATE TABLE split_task_notes (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   hidden INTEGER NOT NULL DEFAULT 0,
   text_is_encrypted INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, id)
 );
 

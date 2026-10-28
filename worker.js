@@ -114,8 +114,19 @@ function visitorRegion(cf) {
  */
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 let schemaCheckedAt = 0;
+let notesOrderCheckedAt = 0;
 const SWEEP_THROTTLE_MS = 4 * 3600 * 1000;
 let lastSweepAttempt = 0;
+async function ensureNotesOrderColumn(db) {
+  if (Date.now() - notesOrderCheckedAt < SCHEMA_CHECK_TTL_MS) return;
+  try {
+    await db.prepare('ALTER TABLE split_task_notes ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0').run();
+  } catch (err) {
+    if (!/duplicate column|already exists/i.test(err?.message || '')) throw err;
+  }
+  notesOrderCheckedAt = Date.now();
+}
+
 async function ensureSchemaCached(db) {
   if (Date.now() - schemaCheckedAt < SCHEMA_CHECK_TTL_MS) return;
   await ensureSchema(db);
@@ -129,7 +140,8 @@ async function ensureSchema(db) {
 }
 
 /**
- * Which incomplete tasks roll forward one day on this sweep.
+ * Which incomplete tasks from before today roll forward one day on this sweep.
+ * Today's tasks remain scheduled for today until the next day's sweep.
  *
  * A task with no due date has nothing to stop at, and one that has not reached
  * its due date yet still has runway - both always roll. Past the due date it is
@@ -147,7 +159,7 @@ const ROLLING_TASK_WHERE = `
       type = 'task'
       AND done = 0
       AND recurrence_id IS NULL
-      AND item_date <= date('now', 'localtime')
+      AND item_date < date('now', 'localtime')
       AND (
         due_date IS NULL
         OR item_date < due_date
@@ -681,6 +693,7 @@ export default {
           return jsonResponse({ error: 'Invalid credentials' }, 401);
         }
         const userId = account.user_id;
+        await ensureNotesOrderColumn(syncDb);
 
         // Lazy daily sweep; guarded so it can never break/slow the sync.
         // Throttled: the hourly cron owns the sweep (was: claim-write EVERY poll).
@@ -725,7 +738,7 @@ export default {
           syncDb.prepare('SELECT * FROM split_task_settings WHERE user_id = ?').bind(userId),
           syncDb.prepare('SELECT * FROM split_task_categories WHERE user_id = ?').bind(userId),
           syncDb.prepare('SELECT * FROM split_task_items WHERE user_id = ?').bind(userId),
-          syncDb.prepare('SELECT * FROM split_task_notes WHERE user_id = ?').bind(userId),
+          syncDb.prepare('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC').bind(userId),
         ];
         let settings = null, categories = [], items = [], notes = [];
         try {
@@ -758,7 +771,7 @@ export default {
           settings = await readOne('SELECT * FROM split_task_settings WHERE user_id = ?');
           categories = await readRows('SELECT * FROM split_task_categories WHERE user_id = ?');
           items = await readRows('SELECT * FROM split_task_items WHERE user_id = ?');
-          notes = await readRows('SELECT * FROM split_task_notes WHERE user_id = ?');
+          notes = await readRows('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC');
         }
         return jsonResponse({
           settings,
@@ -803,6 +816,7 @@ export default {
           return jsonResponse({ error: 'Invalid credentials' }, 401);
         }
         const userId = account.user_id;
+        await ensureNotesOrderColumn(pushDb);
         // Per-user quotas: one abusive account can't fill the 500MB D1.
         if (Array.isArray(items) && items.length > 2000)
           return jsonResponse({ error: 'Too many items (max 2000)' }, 413);
@@ -1012,19 +1026,20 @@ export default {
             env['ST-DATABASE'].prepare('DELETE FROM split_task_notes WHERE user_id = ?').bind(userId),
           ];
           const nowIso = new Date().toISOString();
-          for (const note of notes) {
+          for (const [noteIndex, note] of notes.entries()) {
             if (!note || typeof note.id === 'undefined' || note.id === null) continue;
             stmts.push(env['ST-DATABASE'].prepare(`
               INSERT INTO split_task_notes (
-                id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted, sort_order
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(user_id, id) DO UPDATE SET
                 text = excluded.text,
                 category_id = excluded.category_id,
                 created_at = excluded.created_at,
                 updated_at = excluded.updated_at,
                 hidden = excluded.hidden,
-                text_is_encrypted = excluded.text_is_encrypted
+                text_is_encrypted = excluded.text_is_encrypted,
+                sort_order = excluded.sort_order
             `).bind(
               String(note.id), userId, String(note.text ?? ''),
               note.category_id ?? null,
@@ -1032,6 +1047,7 @@ export default {
               note.updated_at || nowIso,
               note.hidden === 1 || note.hidden === '1' ? 1 : 0,
               note.text_is_encrypted === 1 || note.text_is_encrypted === '1' ? 1 : 0,
+              Number.isInteger(note.sort_order) ? note.sort_order : noteIndex,
             ));
           }
           for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
