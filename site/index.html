@@ -634,9 +634,25 @@
           <a href="/policies/eula/">EULA</a>
         </div>
       </div>
-      <div class="bottom">Manumit · All rights reserved · Site v191</div>
+      <div class="bottom">Manumit · All rights reserved · Site v192</div>
     </footer>
 
+    <script>
+      const ideas = document.querySelector('.mm-ideas');
+      if (ideas) {
+        ideas.addEventListener('pointerover', (event) => {
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          const idea = event.target.closest('.mm-idea');
+          if (!idea || !ideas.contains(idea) || idea.contains(event.relatedTarget)) return;
+          idea.classList.add('is-animating');
+        });
+
+        ideas.addEventListener('animationend', (event) => {
+          if (!event.target.matches('.mm-idea-mark')) return;
+          event.target.closest('.mm-idea').classList.remove('is-animating');
+        });
+      }
+    </script>
     <script defer src="/shared.js"></script>
     <script defer src="/nav.js"></script>
     <script defer src="/status.js"></script>

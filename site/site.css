@@ -896,9 +896,9 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-idea-mark--free { transform: rotate(8deg); }
 .mm-idea { position: relative; }
 .mm-idea::before { content: ""; position: absolute; inset: -20px -12px; }
-.mm-idea:hover .mm-idea-mark--privacy { animation: mm-idea-wiggle-privacy 700ms ease-out; }
-.mm-idea:hover .mm-idea-mark--quality { animation: mm-idea-wiggle-quality 700ms ease-out; }
-.mm-idea:hover .mm-idea-mark--free { animation: mm-idea-wiggle-free 700ms ease-out; }
+.mm-idea.is-animating .mm-idea-mark--privacy { animation: mm-idea-wiggle-privacy 700ms ease-out; }
+.mm-idea.is-animating .mm-idea-mark--quality { animation: mm-idea-wiggle-quality 700ms ease-out; }
+.mm-idea.is-animating .mm-idea-mark--free { animation: mm-idea-wiggle-free 700ms ease-out; }
 @keyframes mm-idea-wiggle-privacy {
   0%, 100% { transform: rotate(0); }
   24% { transform: rotate(-19deg) scale(1.1); }
@@ -989,16 +989,20 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   .mm-pod, .mm-body, .mm-boost, .mm-flame { animation: none; }
   .mm-contrail, .mm-flame-reveal, .mm-sep, .mm-sep2, .mm-ig, .mm-pad, .mm-twinkle { display: none; }
   .mm-earth-spin { animation: none; }
-  .mm-idea:hover .mm-idea-mark { animation: none; }
+  .mm-idea.is-animating .mm-idea-mark { animation: none; }
 }
 .mm-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .mm-cta { background: #d9a521; color: #241a02;
   border: none; font-size: 16px; font-weight: 600; padding: 16px 24px; border-radius: 8px; }
 /* Primary action uses the site accent; the donation service keeps its own brand color. */
 .mm-hero--horizon .mm-actions .mm-cta {
-  background: #2e7898; color: #fff; border: 2px solid #16465a; }
+  background: #2e7898; color: #fff; border: none; }
 .mm-hero--horizon .mm-actions .mm-cta:hover {
   background: #205a73; border-color: #123949; color: #fff; }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .mm-hero--horizon .mm-actions .mm-cta { border: 2px solid #16465a; }
+}
+html[data-theme="dark"] .mm-hero--horizon .mm-actions .mm-cta { border: 2px solid #16465a; }
 /* Donate takes the old ghost's slot, so it matches the hero button sizing. */
 .mm-actions .btn.bmc { font-size: 16px; padding: 16px 24px; border-radius: 8px; }
 .mm-pillars { margin-top: 48px; }
