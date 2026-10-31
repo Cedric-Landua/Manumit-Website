@@ -14,6 +14,7 @@ const siteDir = path.join(websiteRoot, 'site');
 const dist = path.join(websiteRoot, 'dist');
 // Pre-built Split Task app output (committed to this repo) so Cloudflare Pages
 // can deploy the app even though the Split Task source lives in a sibling repo.
+// Refresh it from the sibling app build when that source is available locally.
 const APP_FALLBACK_ROOT = path.join(websiteRoot, 'site', 'split-task-app');
 
 // Every app on manumit.studio: folder (next to Website/), product (its Vite
@@ -42,6 +43,7 @@ const appRoot = (app) => {
   return fs.existsSync(r) ? r : APP_FALLBACK_ROOT;
 };
 const appBuild = (app) => path.join(appRoot(app), 'dist', 'products', app.product);
+const appFallbackBuild = (app) => path.join(APP_FALLBACK_ROOT, 'dist', 'products', app.product);
 const mounts = APPS.map((app) => path.resolve(dist, appMount(app)));
 const insideMount = (p) => mounts.some((m) => p === m || p.startsWith(m + path.sep));
 
@@ -69,6 +71,14 @@ for (const app of APPS) {
   if (!fs.existsSync(appBuild(app))) {
     console.error(`[assemble] missing ${appBuild(app)} - run "npm run build" in "${app.folder}" first.`);
     process.exit(1);
+  }
+
+  if (!skipAppBuild && !isFallback) {
+    const fallbackBuild = appFallbackBuild(app);
+    fs.rmSync(fallbackBuild, { recursive: true, force: true });
+    fs.mkdirSync(path.dirname(fallbackBuild), { recursive: true });
+    fs.cpSync(appBuild(app), fallbackBuild, { recursive: true, force: true });
+    console.log(`[assemble] refreshed committed fallback for "${app.folder}"`);
   }
 }
 
