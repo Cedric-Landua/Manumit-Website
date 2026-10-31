@@ -890,10 +890,33 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-idea { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .mm-idea-mark { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px;
   color: #205a73; background: #fff; border: 1px solid rgba(32, 90, 115, 0.18);
-  border-radius: 12px; }
+  border-radius: 12px; transition: transform 0.16s ease; }
 .mm-idea-mark svg { width: 24px; height: 24px; display: block; }
 .mm-idea-mark--quality { transform: rotate(-8deg); }
 .mm-idea-mark--free { transform: rotate(8deg); }
+.mm-idea { position: relative; }
+.mm-idea::before { content: ""; position: absolute; inset: -20px -12px; }
+.mm-idea:hover .mm-idea-mark--privacy { animation: mm-idea-wiggle-privacy 700ms ease-out; }
+.mm-idea:hover .mm-idea-mark--quality { animation: mm-idea-wiggle-quality 700ms ease-out; }
+.mm-idea:hover .mm-idea-mark--free { animation: mm-idea-wiggle-free 700ms ease-out; }
+@keyframes mm-idea-wiggle-privacy {
+  0%, 100% { transform: rotate(0); }
+  24% { transform: rotate(-19deg) scale(1.1); }
+  52% { transform: rotate(12deg) scale(1.04); }
+  76% { transform: rotate(-8deg); }
+}
+@keyframes mm-idea-wiggle-quality {
+  0%, 100% { transform: rotate(-8deg); }
+  24% { transform: rotate(-25deg) scale(1.1); }
+  52% { transform: rotate(8deg) scale(1.04); }
+  76% { transform: rotate(-17deg); }
+}
+@keyframes mm-idea-wiggle-free {
+  0%, 100% { transform: rotate(8deg); }
+  24% { transform: rotate(25deg) scale(1.1); }
+  52% { transform: rotate(-8deg) scale(1.04); }
+  76% { transform: rotate(17deg); }
+}
 .mm-idea-copy { display: grid; gap: 4px; color: #202a30; }
 .mm-idea-copy strong { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
 .mm-idea-copy > span { color: #58666e; font-size: 12px; line-height: 1.5; }
@@ -935,11 +958,8 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   12% { opacity: 0.22; transform: translate(59px, -17px) scale(1.75); }
   16.8%, 100% { opacity: 0; transform: translate(77px, -22px) scale(2); }
 }
-.mm-kicker {
-  font-size: 13px; font-weight: 500; color: #58666e; }
-.mm-kicker-dot { width: 8px; height: 8px; border-radius: 50%; background: #2e7898; }
-.mm-hero--horizon h1 { color: #202a30; font-size: clamp(56px, 8vw, 88px);
-  line-height: 1; letter-spacing: -0.035em; margin: 16px 0 24px; text-wrap: balance; font-weight: 600; }
+.mm-hero--horizon h1 { color: #202a30; font-size: clamp(40px, 7vw, 72px);
+  line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 24px; text-wrap: balance; font-weight: 600; }
 .mm-hero--horizon h1 span { color: #205a73; }
 .mm-hero--horizon .mm-lede { color: #46565e; font-size: 18px; line-height: 1.6;
   max-width: 33rem; margin: 0 0 24px; }
@@ -947,6 +967,7 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   .mm-hero--horizon { min-height: 560px; }
   .mm-hero--horizon .mm-hero-inner { padding: 72px 24px 24px; }
   .mm-ideas { width: calc(100% - 32px); margin-bottom: 24px; gap: 12px; }
+  .mm-idea::before { inset: -12px -6px; }
   .mm-idea { flex-direction: column; align-items: flex-start; gap: 8px; }
   .mm-idea-mark { width: 44px; height: 44px; flex-basis: 44px; border-radius: 8px; }
   .mm-idea-mark svg { width: 24px; height: 24px; }
@@ -968,18 +989,19 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   .mm-pod, .mm-body, .mm-boost, .mm-flame { animation: none; }
   .mm-contrail, .mm-flame-reveal, .mm-sep, .mm-sep2, .mm-ig, .mm-pad, .mm-twinkle { display: none; }
   .mm-earth-spin { animation: none; }
+  .mm-idea:hover .mm-idea-mark { animation: none; }
 }
 .mm-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 .mm-cta { background: #d9a521; color: #241a02;
   border: none; font-size: 16px; font-weight: 600; padding: 16px 24px; border-radius: 8px; }
 /* Primary action uses the site accent; the donation service keeps its own brand color. */
 .mm-hero--horizon .mm-actions .mm-cta {
-  background: #2e7898; color: #fff; }
+  background: #2e7898; color: #fff; border: 2px solid #16465a; }
 .mm-hero--horizon .mm-actions .mm-cta:hover {
-  background: #205a73; color: #fff; }
+  background: #205a73; border-color: #123949; color: #fff; }
 /* Donate takes the old ghost's slot, so it matches the hero button sizing. */
 .mm-actions .btn.bmc { font-size: 16px; padding: 16px 24px; border-radius: 8px; }
-.mm-pillars { margin-top: 64px; }
+.mm-pillars { margin-top: 48px; }
 .mm-pillars .section-head h2 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.02em; }
 .mm-card { border-top: 1px solid var(--border); transition: border-color 0.15s ease; }
 .mm-card:hover { border-color: var(--brand); }
@@ -994,6 +1016,67 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-pillars .goal-card:hover { border-color: var(--brand); }
 .mm-pillars .goal-card h3 { margin: 0 0 12px; font-size: 20px; color: var(--text); font-weight: 600; }
 .mm-pillars .goal-card p { font-size: 15px; line-height: 1.7; color: var(--text-light); }
+/* Featured product bridge between the studio principles and implementation stack. */
+.mm-featured { width: min(var(--container), calc(100% - 48px)); margin: 48px auto 0;
+  display: grid; grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr);
+  align-items: center; gap: 40px; }
+.mm-featured-copy { max-width: 380px; }
+.mm-featured-label { margin: 0 0 8px; color: var(--brand-dark); font-size: 13px; font-weight: 600; }
+.mm-featured-copy h2 { margin: 0 0 12px; color: var(--text); font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -0.02em; }
+.mm-featured-copy > p:not(.mm-featured-label) { margin: 0; color: var(--text-light); font-size: 16px; line-height: 1.65; }
+.mm-featured-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.mm-featured-actions .btn { padding: 10px 14px; font-size: 14px; }
+.mm-preview { min-width: 0; padding: 16px; border: 1px solid var(--border);
+  border-radius: 14px; background: var(--surface); color: var(--text); }
+.mm-preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.mm-preview-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display);
+  font-size: 14px; font-weight: 600; white-space: nowrap; }
+.mm-preview-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px;
+  background: var(--brand); color: var(--bg); font-size: 13px; }
+.mm-preview-mark svg { width: 15px; height: 15px; display: block; }
+.mm-preview-views { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--bg); }
+.mm-preview-view { min-width: 42px; padding: 5px 8px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--text-light); font: inherit; font-size: 12px; cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease; }
+.mm-preview-view:hover { color: var(--text); }
+.mm-preview-view.is-active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.mm-preview-view:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.mm-preview-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 0; color: var(--text-light); font-size: 12px; }
+.mm-preview-caption strong { color: var(--text); font-weight: 500; }
+.mm-preview-panel { min-height: 160px; }
+.mm-preview-panel[hidden] { display: none; }
+.mm-preview-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 560px; border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
+.mm-preview-day { display: flex; flex-direction: column; min-height: 144px; padding: 10px 8px;
+  gap: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.mm-preview-day > span { color: var(--text-light); font-size: 11px; }
+.mm-preview-day > strong { color: var(--text); font-size: 14px; font-weight: 500; }
+.mm-preview-day > i { margin-top: 6px; padding: 6px; border-left: 2px solid var(--brand);
+  border-radius: 0 4px 4px 0; background: var(--brand-50); color: var(--text);
+  font-size: 10px; font-style: normal; line-height: 1.35; }
+.mm-preview-panel--day { min-height: 160px; }
+.mm-preview-day-heading { display: flex; align-items: baseline; gap: 8px; padding: 0 0 10px;
+  color: var(--text-light); font-size: 12px; }
+.mm-preview-day-heading strong { color: var(--text); font-size: 16px; font-weight: 500; }
+.mm-preview-tasks { display: grid; gap: 8px; }
+.mm-preview-tasks > div { display: grid; grid-template-columns: 56px 1fr; gap: 10px;
+  align-items: center; min-height: 32px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.mm-preview-tasks time { color: var(--text-light); font-size: 12px; font-variant-numeric: tabular-nums; }
+.mm-preview-tasks > div > span { padding-left: 8px; border-left: 2px solid var(--brand); }
+.mm-preview-month { max-width: 560px; margin: 0 auto; }
+.mm-preview-weekdays, .mm-preview-month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mm-preview-weekdays { padding-bottom: 6px; color: var(--text-light); text-align: center; font-size: 11px; }
+.mm-preview-month-grid > span { position: relative; display: grid; place-items: center; min-height: 27px;
+  border-top: 1px solid var(--border); color: var(--text); font-size: 11px; }
+.mm-preview-month-grid > span.is-muted { color: var(--text-light); opacity: 0.65; }
+.mm-preview-month-grid > span.has-task::after { position: absolute; bottom: 3px; width: 3px; height: 3px;
+  border-radius: 50%; background: var(--brand); content: ""; }
+.mm-preview-month-grid > span.is-selected { color: var(--brand-dark); font-weight: 600; }
+.mm-featured .mm-preview-panel { overflow-x: auto; scrollbar-color: var(--border) transparent; }
 /* Layered stack — brand colors intact, grouped by where things run; each row
    lays out card · simple isometric plate · card. Hovering the plate grows the
    whole row; hovering a card grows only that card. */
@@ -1055,10 +1138,10 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   padding: 32px; border-radius: 12px; }
 .portfolio-strip.mm-cta h3 { color: var(--text); font-size: 24px; }
 .portfolio-strip.mm-cta p { color: var(--text-light); }
-.portfolio-strip.mm-cta .btn.primary { background: var(--brand); color: #fff; }
-.portfolio-strip.mm-cta .btn.primary:hover { background: var(--brand-dark); color: #fff; }
 .contact-strip.mm-contact { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 @media (max-width: 860px) {
+  .mm-featured { grid-template-columns: 1fr; gap: 20px; }
+  .mm-featured-copy { max-width: 560px; }
   .mm-hero-inner { grid-template-columns: 1fr; padding: 48px 28px; }
   .mm-net-grid { grid-template-columns: 1fr; }
   /* Keep the same compact card treatment when the pillars stack. */
@@ -1077,18 +1160,20 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 /* Live network panel — light card holding a two-tone map: the frame around the
    graphic is signature navy (--brand), the graphic box itself deep space navy
    so the dots read against near-black ground. */
-.mm-net { margin-top: 24px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 32px 24px; color: var(--text); }
+.mm-net { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center; gap: 24px; width: min(var(--container), calc(100% - 48px));
+  margin: 48px auto 0; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; padding: 24px; color: var(--text); }
 .mm-net-head .mm-live { display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 500;
   color: var(--text-light); }
 .mm-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #538b68; }
-.mm-net-head h2 { margin: 10px 0 6px; font-size: clamp(26px, 3.4vw, 38px);
+.mm-net-head h2 { margin: 8px 0 6px; font-size: clamp(24px, 3vw, 32px);
   letter-spacing: -0.02em; color: var(--text); font-weight: 600; }
 .mm-net-head p { margin: 0; color: var(--text-light); font-size: 14px; max-width: 44rem; }
 .mm-net-grid { display: contents; }
-.mm-map { position: relative; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
-  margin-top: 24px; }
+.mm-map { position: relative; width: 100%; max-width: 640px; justify-self: end;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .mm-up-row { display: flex; align-items: center; gap: 18px; margin-top: 16px; flex-wrap: wrap; }
 .mm-up-inline { display: flex; align-items: baseline; gap: 8px; }
 .mm-up-prefix { font-family: var(--font-display); font-size: 14px; font-weight: 500; color: var(--text-light); }
@@ -1103,12 +1188,12 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-range-btn:hover { color: var(--text); background: var(--brand-50); }
 .mm-range-btn.mm-range-on { background: var(--surface); color: var(--text);
   box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin: -1px; }
-.mm-net--after { margin-top: 64px; }
+.mm-net--after { margin-top: 48px; }
 @media (max-width: 560px) {
   .mm-up-row { align-items: flex-start; flex-direction: column; gap: 12px; }
 }
 /* The map keeps its dark plotting area; the frame stays neutral. */
-.mm-map { background: var(--bg); border-radius: 12px; padding: 16px; }
+.mm-map { background: var(--bg); border-radius: 12px; padding: 12px; }
 .mm-map svg { width: 100%; height: auto; display: block; }
 .mm-map-bg { fill: #143b5e; stroke: rgba(255,255,255,0.2); }
 .mm-dot { fill: rgba(152,220,255,0.3); }
@@ -1131,18 +1216,19 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
   .mm-node-ring, .mm-node-fill, .mm-tip { transition: none; }
   .mm-tip { transform: none; }
 }
-.mm-regions { list-style: none; margin: 14px 0 0; padding: 0; display: grid;
-  grid-template-columns: repeat(3, 1fr); gap: 8px 18px; }
-.mm-regions li { font-size: 12px; color: rgba(255,255,255,0.75);
-  display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 7px;
+.mm-regions { list-style: none; margin: 10px 0 0; padding: 0; display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; }
+.mm-regions li { min-width: 0; font-size: 12px; color: var(--text-light);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px;
   white-space: nowrap; }
+.mm-regions li > span:nth-child(2) { min-width: 0; }
 .mm-regions li strong { justify-self: end; }
 .mm-regions li em { display: none; }
 .mm-regions li:nth-child(3n+2) { justify-content: center; }
 .mm-regions li:nth-child(3n) { justify-content: end; }
 .mm-r-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.mm-regions strong { color: #fff; }
-.mm-regions li.mm-active { background: rgba(165,224,255,0.14); border-radius: 8px;
+.mm-regions strong { color: var(--text); }
+.mm-regions li.mm-active { background: var(--brand-50); border-radius: 8px;
   padding: 3px 8px; margin: -3px -8px; }
 .mm-you-ring { fill: none; stroke: #fff; stroke-width: 2; opacity: 0.9;
   animation: mm-you-pulse 2s ease-out infinite; }
@@ -1153,10 +1239,18 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-regions em { color: rgba(255,255,255,0.45); font-style: normal; font-size: 12px;
   text-transform: none; letter-spacing: 0; }
 @media (max-width: 860px) {
+  .mm-net { grid-template-columns: 1fr; }
+  .mm-map { width: 100%; max-width: 720px; justify-self: center; margin: 0 auto; }
   .mm-net-grid { grid-template-columns: 1fr; }
   .mm-regions { grid-template-columns: repeat(2, 1fr); }
   .mm-regions li:nth-child(3n+2), .mm-regions li:nth-child(3n) { justify-content: start; }
   .mm-regions li:nth-child(2n) { justify-content: end; }
+}
+@media (max-width: 560px) {
+  .mm-regions li { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto;
+    white-space: normal; }
+  .mm-regions li > span:nth-child(2) { white-space: normal; }
+  .mm-regions li > strong { grid-column: 2; grid-row: 2; justify-self: start; }
 }
 
 /* 404 page uses the same quiet hero surface without the old space illustration. */
