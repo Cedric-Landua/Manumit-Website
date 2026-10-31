@@ -80,12 +80,6 @@ https://manumit.studio/help/                  ← support tickets
 https://manumit.studio/policies/              ← Privacy + Terms
 ```
 
-When building this website alongside the sibling app source, `npm run build`
-also refreshes `site/split-task-app/dist/`. That committed fallback is what
-Cloudflare Pages uses when the app source is not present in the website checkout;
-include its updated files in the website commit before deploying. `npm run assemble`
-only uses existing build output and does not refresh the fallback.
-
 **Backend:** `worker.js` is the single Cloudflare Worker behind the Split Task
 API endpoint (all `/api/*` routes). `schema-d1.sql` defines its shared D1:
 stable Manumit user IDs, login identities, product access, and product-owned
