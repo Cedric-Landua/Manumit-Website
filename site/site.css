@@ -998,11 +998,7 @@ html[data-theme="dark"] .help-form .help-form-submit:hover {
 .mm-hero--horizon .mm-actions .mm-cta {
   background: #2e7898; color: #fff; border: none; }
 .mm-hero--horizon .mm-actions .mm-cta:hover {
-  background: #205a73; border-color: #123949; color: #fff; }
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) .mm-hero--horizon .mm-actions .mm-cta { border: 2px solid #16465a; }
-}
-html[data-theme="dark"] .mm-hero--horizon .mm-actions .mm-cta { border: 2px solid #16465a; }
+  background: #205a73; color: #fff; }
 /* Donate takes the old ghost's slot, so it matches the hero button sizing. */
 .mm-actions .btn.bmc { font-size: 16px; padding: 16px 24px; border-radius: 8px; }
 .mm-pillars { margin-top: 48px; }
@@ -1196,14 +1192,18 @@ html[data-theme="dark"] .mm-hero--horizon .mm-actions .mm-cta { border: 2px soli
 @media (max-width: 560px) {
   .mm-up-row { align-items: flex-start; flex-direction: column; gap: 12px; }
 }
-/* The map keeps its dark plotting area; the frame stays neutral. */
+/* Coastlines give the latency plot a clear ocean-and-land map. */
 .mm-map { background: var(--bg); border-radius: 12px; padding: 12px; }
 .mm-map svg { width: 100%; height: auto; display: block; }
-.mm-map-bg { fill: #143b5e; stroke: rgba(255,255,255,0.2); }
-.mm-dot { fill: rgba(152,220,255,0.3); }
-.mm-dot-lit { fill: #a5e0ff; }
-.mm-link { fill: none; stroke: #a5e0ff; stroke-width: 1.5; opacity: 0.62; }
-.mm-node-ring { fill: #143b5e; stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
+.mm-map-bg { fill: url(#mm-ocean); stroke: rgba(255,255,255,0.2); }
+.mm-map-current path { fill: none; stroke: rgba(147, 213, 225, 0.12); stroke-width: 1.5; }
+.mm-map-beach { fill: #e9c890; stroke: #f3dbac; stroke-width: 1; }
+.mm-map-land { fill: #56896d; stroke: #78a981; stroke-width: 0.7; }
+.mm-map-island { fill: #56896d; stroke: #e9c890; stroke-width: 1.5; }
+.mm-dot { fill: rgba(206, 232, 224, 0.52); }
+.mm-dot-lit { fill: #f5f2d5; }
+.mm-link { fill: none; stroke: #b8e3dc; stroke-width: 1.5; opacity: 0.75; }
+.mm-node-ring { fill: #174e67; stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
 .mm-node { cursor: pointer; outline: none; }
 .mm-node:hover .mm-node-ring, .mm-node:focus-visible .mm-node-ring { r: 12; stroke-width: 2.5; }
 .mm-node:hover .mm-node-fill, .mm-node:focus-visible .mm-node-fill { opacity: 0.35; }

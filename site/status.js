@@ -3,15 +3,15 @@
 // Status refreshes quietly every 60 s; map animates continuously.
 (function () {
   var API = (window.FE && window.FE.API_BASE) || 'https://manumit-api.landua-cedric.workers.dev';
-  var HUB = { id: 'hub', label: 'Core hub', x: 150, y: 215 };
+  var HUB = { id: 'hub', label: 'Core hub', x: 140, y: 105 };
   var REGIONS = [
-    { id: 'us-central', label: 'US Central', x: 158, y: 128, ms: 35 },
-    { id: 'us-east', label: 'US East', x: 246, y: 128, ms: 40 },
-    { id: 'us-west', label: 'US West', x: 82, y: 150, ms: 50 },
+    { id: 'us-central', label: 'US Central', x: 158, y: 110, ms: 35 },
+    { id: 'us-east', label: 'US East', x: 200, y: 100, ms: 40 },
+    { id: 'us-west', label: 'US West', x: 82, y: 105, ms: 50 },
     { id: 'eu-west', label: 'Europe', x: 335, y: 92, ms: 95 },
     { id: 'sa', label: 'South America', x: 230, y: 252, ms: 120 },
-    { id: 'asia', label: 'Asia Pacific', x: 505, y: 150, ms: 160 },
-    { id: 'oceania', label: 'Oceania', x: 560, y: 250, ms: 185 }
+    { id: 'asia', label: 'Asia Pacific', x: 505, y: 110, ms: 160 },
+    { id: 'oceania', label: 'Oceania', x: 560, y: 230, ms: 185 }
   ];
   // Rough continent blobs for the dotted map (flat, Cloudflare-style).
   // [cx, cy, rx, ry] ellipses in SVG coords — dots land inside these.
@@ -100,7 +100,7 @@
       links.innerHTML = REGIONS.map(function (r, i) {
         var dist = Math.hypot(r.x - HUB.x, r.y - HUB.y);
         return '<path d="' + arc(r.x, r.y, 20 + dist * 0.22) + '" class="mm-link" style="animation-delay:' + (i * 0.45) + 's"/>'
-          + '<circle r="3" fill="#d9a521" class="mm-packet" style="offset-path: path(\'' + arc(r.x, r.y, 20 + dist * 0.22) + '\'); animation-delay:' + (i * 0.45) + 's"/>';
+          + '<circle r="3" fill="#9cf4e8" class="mm-packet" style="offset-path: path(\'' + arc(r.x, r.y, 20 + dist * 0.22) + '\'); animation-delay:' + (i * 0.45) + 's"/>';
       }).join('');
     }
     if (list) {

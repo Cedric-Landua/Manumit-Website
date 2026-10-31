@@ -50,13 +50,13 @@ function bindToggleList(rootSel) {
 }
 
 // Theme toggle: <head> pre-paint script sets data-theme; this wires buttons
-// (localStorage `theme`, desktop-only) and syncs aria-pressed.
+// (localStorage `theme`, dark by default) and syncs aria-pressed.
 function bindThemeToggles(btnSel) {
   var root = document.documentElement;
   function current() {
     var stored = root.getAttribute('data-theme');
     if (stored === 'light' || stored === 'dark') return stored;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark';
   }
   function apply(theme) {
     root.setAttribute('data-theme', theme);

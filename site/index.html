@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script>(function(){try{var t=localStorage.getItem('theme');if((t==='light'||t==='dark')&&window.matchMedia('(min-width:641px)').matches){document.documentElement.setAttribute('data-theme',t);}else{document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+    <script>(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manumit · Free apps. Done well. Built for privacy</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -589,8 +589,42 @@
         </div>
         <div class="mm-map" role="img" aria-label="World map with estimated latency per region">
           <svg viewBox="0 0 640 320" aria-hidden="true">
+            <defs>
+              <linearGradient id="mm-ocean" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#155274" />
+                <stop offset="1" stop-color="#0b354f" />
+              </linearGradient>
+              <clipPath id="mm-land-clip">
+                <use href="#mm-north-america" />
+                <use href="#mm-south-america" />
+                <use href="#mm-europe" />
+                <use href="#mm-africa" />
+                <use href="#mm-asia" />
+                <use href="#mm-oceania" />
+              </clipPath>
+            </defs>
             <rect x="8" y="8" width="624" height="304" rx="18" class="mm-map-bg" />
-            <g class="mm-dots" id="mm-dots"></g>
+            <g class="mm-map-current">
+              <path d="M18 88 Q80 72 142 88 T266 88 T390 88 T514 88 T638 88" />
+              <path d="M12 185 Q78 169 144 185 T276 185 T408 185 T540 185 T672 185" />
+              <path d="M-20 270 Q48 254 116 270 T252 270 T388 270 T524 270 T660 270" />
+            </g>
+            <g class="mm-map-coast">
+              <path class="mm-map-beach" d="M56 91 L70 72 L95 62 L108 48 L126 54 L140 46 L157 54 L174 53 L184 65 L204 70 L216 84 L231 91 L226 105 L210 111 L204 126 L188 135 L170 134 L159 145 L139 139 L125 147 L109 137 L91 139 L77 125 L63 119 Z" />
+              <path id="mm-north-america" class="mm-map-land" d="M63 92 L76 77 L97 68 L110 55 L126 61 L141 53 L156 61 L171 60 L178 70 L198 76 L211 87 L222 94 L218 102 L204 107 L198 121 L185 129 L171 128 L159 138 L140 132 L126 140 L110 130 L94 132 L81 119 L68 114 Z" />
+              <path class="mm-map-beach" d="M189 147 L207 143 L224 151 L239 163 L244 181 L257 197 L252 218 L246 238 L239 260 L227 281 L218 268 L220 247 L210 228 L214 208 L200 189 L194 171 Z" />
+              <path id="mm-south-america" class="mm-map-land" d="M197 152 L209 150 L222 157 L234 167 L238 183 L250 198 L245 217 L239 237 L232 257 L226 269 L225 246 L216 229 L220 209 L207 191 L201 173 Z" />
+              <path class="mm-map-beach" d="M288 90 L298 77 L313 75 L320 65 L335 69 L342 78 L359 76 L370 84 L381 97 L376 108 L365 110 L358 121 L343 123 L332 115 L318 118 L308 108 L296 105 Z" />
+              <path id="mm-europe" class="mm-map-land" d="M295 91 L303 82 L316 80 L322 72 L334 75 L341 84 L357 82 L366 88 L374 98 L371 103 L361 105 L354 116 L343 117 L332 109 L319 112 L311 103 L300 101 Z" />
+              <path class="mm-map-beach" d="M307 127 L326 116 L345 121 L361 132 L374 145 L378 164 L371 184 L365 204 L355 222 L345 238 L335 224 L332 205 L322 188 L326 169 L315 154 Z" />
+              <path id="mm-africa" class="mm-map-land" d="M315 132 L328 123 L343 127 L356 137 L368 149 L371 164 L364 183 L358 202 L348 218 L341 228 L339 205 L329 188 L333 169 L322 155 Z" />
+              <path class="mm-map-beach" d="M373 75 L395 62 L416 64 L432 57 L450 62 L464 56 L483 66 L503 63 L520 72 L540 74 L557 87 L576 95 L588 109 L580 122 L562 124 L552 137 L534 139 L526 151 L506 147 L492 156 L474 150 L457 158 L444 147 L425 150 L412 137 L396 139 L389 125 L375 118 L382 105 L370 95 Z" />
+              <path id="mm-asia" class="mm-map-land" d="M381 78 L397 68 L416 70 L433 63 L450 68 L465 62 L482 72 L501 69 L518 78 L538 80 L551 91 L570 99 L579 109 L576 116 L558 118 L548 131 L532 133 L524 144 L507 140 L493 149 L475 143 L458 151 L445 140 L428 143 L415 130 L400 132 L394 120 L381 113 L388 104 L377 96 Z" />
+              <path class="mm-map-beach" d="M508 220 L522 209 L540 211 L552 204 L570 210 L585 220 L591 234 L582 245 L566 249 L550 243 L536 248 L521 239 Z" />
+              <path id="mm-oceania" class="mm-map-land" d="M516 221 L525 215 L540 217 L553 210 L568 215 L581 223 L584 233 L578 239 L565 243 L550 237 L537 242 L524 234 Z" />
+              <path class="mm-map-island" d="M260 108 l5 -3 4 5 -4 5 z M588 165 l5 -3 5 5 -5 5 z M282 242 l4 -3 4 4 -4 4 z" />
+            </g>
+            <g class="mm-dots" id="mm-dots" clip-path="url(#mm-land-clip)"></g>
             <g class="mm-map-links" id="mm-links"></g>
             <g id="mm-nodes"></g>
           </svg>
@@ -634,7 +668,7 @@
           <a href="/policies/eula/">EULA</a>
         </div>
       </div>
-      <div class="bottom">Manumit · All rights reserved · Site v192</div>
+      <div class="bottom">Manumit · All rights reserved · Site v193</div>
     </footer>
 
     <script>
