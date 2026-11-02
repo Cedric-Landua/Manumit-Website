@@ -3,7 +3,8 @@
 Everything that *is* the `manumit.studio` website: the public site shell, the
 build that composes the deployable `dist/`, and the Cloudflare Worker + D1
 schema behind `/api/*`. App code does not live here - each app keeps its own
-folder next to this one (`../Split Task`, and the other apps as they arrive).
+folder next to this one (`../Split Task`, `../Vocabulary Expander`, and the
+other apps as they arrive).
 
 ## Layout - website vs app
 
@@ -12,13 +13,15 @@ folder next to this one (`../Split Task`, and the other apps as they arrive).
 │   ├── index.html               home page                → /
 │   ├── products/index.html      product cards            → /products/
 │   ├── products/split-task/     Split Task product page  → /products/split-task/
-│   │                            (the app itself is mounted one level deeper, at
-│   │                            /products/split-task/app/, by the build)
+│   ├── products/syllable/       Syllable product page    → /products/syllable/
+│   ├── data/                    account and data guide   → /data/
+│   │   └── delete/              credential-verified account deletion → /data/delete/
 │   ├── policies/                policies index + privacy/ + eula/ + policies.css
 │   ├── help/  ·  help.js        ticket form              → /help/
 │   ├── admin/ ·  admin.js       ticket dashboard         → /admin/
 │   ├── 404.html                 site-level 404 (Pages serves the nearest one)
 │   ├── site.css  ·  nav.js      shared site styles + top tab bar
+│   ├── account-deletion.css/js  website-served account deletion flow
 │   ├── help-widget.js           floating "Need help?" widget (every page)
 │   ├── sitemap.xml  ·  _headers SEO sitemap + Cloudflare Pages headers
 │   ├── favicon.svg · icon.png   SVG tab favicon; icon.png = PNG fallback / OG image
@@ -35,13 +38,17 @@ folder next to this one (`../Split Task`, and the other apps as they arrive).
     ├── index.html               manumit.studio/
     ├── products/index.html      /products/
     ├── products/split-task/     the Split Task product page → /products/split-task/
+    ├── products/syllable/       the Syllable product page → /products/syllable/
     ├── policies/…               /policies/
+    ├── data/                    /data/
+    │   └── delete/              /data/delete/
     ├── help/  ·  admin/         /help/ · /admin/
-    └── products/split-task/app/ the Split Task app → /products/split-task/app/
+    ├── products/split-task/app/ the Split Task app → /products/split-task/app/
+    └── products/syllable/app/   the Syllable app → /products/syllable/app/
 ```
 
 - **Website** = this folder (`site/` shell + the build + the Worker backend).
-- **Apps** = `../Split Task`, and later the other app folders. Each app builds
+- **Apps** = `../Split Task`, `../Vocabulary Expander`, and later the other app folders. Each app builds
   only itself, into its own `dist/products/<product>/`; the website build reads
   that output and copies it in. The Android builds therefore never receive the
   site shell, and a broken shell can never break an app build.
@@ -76,6 +83,10 @@ https://manumit.studio/
 https://manumit.studio/products/              ← product list
 https://manumit.studio/products/split-task/   ← product page (what the card links to)
 https://manumit.studio/products/split-task/app/   ← the app (login)
+https://manumit.studio/products/syllable/     ← Syllable product page
+https://manumit.studio/products/syllable/app/ ← Syllable app
+https://manumit.studio/data/                  ← data information + account deletion
+https://manumit.studio/data/delete/           ← account deletion page
 https://manumit.studio/help/                  ← support tickets
 https://manumit.studio/policies/              ← Privacy + Terms
 ```

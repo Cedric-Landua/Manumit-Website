@@ -23,6 +23,7 @@ const APP_FALLBACK_ROOT = path.join(websiteRoot, 'site', 'split-task-app');
 // the last step of "Adding the next app" in README.md.
 const APPS = [
   { folder: 'Split Task', product: 'split-task', mount: 'products/split-task/app' },
+  { folder: 'Vocabulary Expander', product: 'syllable', mount: 'products/syllable/app' },
   // { folder: 'Study app', product: 'study', mount: 'products/study/app' },   <- add once Study ships
 ];
 

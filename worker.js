@@ -136,6 +136,8 @@ async function ensureSchema(db) {
   await db.batch([
     db.prepare('CREATE TABLE IF NOT EXISTS app_state (key TEXT PRIMARY KEY, value TEXT)'),
     db.prepare('CREATE TABLE IF NOT EXISTS split_task_sync_versions (user_id TEXT NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, version INTEGER NOT NULL DEFAULT 0)'),
+    db.prepare("INSERT INTO products (key, name) VALUES ('vocabulary-expander', 'Vocabulary Expander') ON CONFLICT(key) DO NOTHING"),
+    db.prepare('CREATE TABLE IF NOT EXISTS vocabulary_expander_progress (user_id TEXT NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, progress_json TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)'),
   ]);
 }
 
@@ -672,6 +674,92 @@ export default {
         await delDb.prepare('DELETE FROM users WHERE id = ?').bind(account.user_id).run();
 
         return jsonResponse({ success: true, message: 'Account deleted successfully' });
+      }
+
+      // ─── Vocabulary Expander cloud progress ────────────────────────────
+      if (url.pathname === '/api/vocabulary-sync' && request.method === 'GET') {
+        const syncDb = env['ST-DATABASE'];
+        const username = normUsername(url.searchParams.get('username'));
+        const password_hash = normHash(url.searchParams.get('password_hash'));
+        if (!username || !password_hash) {
+          return jsonResponse({ error: 'Username and password hash required' }, 400);
+        }
+        await ensureSchemaCached(syncDb);
+        const account = await findUser(syncDb, username);
+        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+          return jsonResponse({ error: 'Invalid username or password' }, 401);
+        }
+        await syncDb.prepare(
+          "INSERT INTO user_products (user_id, product_key) VALUES (?, 'vocabulary-expander') ON CONFLICT(user_id, product_key) DO NOTHING"
+        ).bind(account.user_id).run();
+        const row = await syncDb.prepare(
+          'SELECT progress_json, updated_at FROM vocabulary_expander_progress WHERE user_id = ?'
+        ).bind(account.user_id).first();
+        let progress = null;
+        if (row) {
+          try {
+            progress = JSON.parse(row.progress_json);
+          } catch (error) {
+            console.error('[vocabulary-sync] stored progress is invalid JSON:', error?.message || error);
+            return jsonResponse({ error: 'Saved vocabulary progress could not be read' }, 500);
+          }
+        }
+        return jsonResponse({ progress, updated_at: row?.updated_at || null });
+      }
+
+      if (url.pathname === '/api/vocabulary-sync' && request.method === 'POST') {
+        const syncDb = env['ST-DATABASE'];
+        const contentLength = Number(request.headers.get('content-length') || 0);
+        if (contentLength > 262144) return jsonResponse({ error: 'Progress payload too large' }, 413);
+        let body;
+        try {
+          body = await request.json();
+        } catch (error) {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+        const username = normUsername(body?.username);
+        const password_hash = normHash(body?.password_hash);
+        const progress = body?.progress;
+        if (!username || !password_hash) {
+          return jsonResponse({ error: 'Username and password hash required' }, 400);
+        }
+        if (!progress || typeof progress !== 'object' || Array.isArray(progress)
+          || !progress.scores || typeof progress.scores !== 'object' || Array.isArray(progress.scores)
+          || !Array.isArray(progress.encountered) || typeof progress.placementComplete !== 'boolean') {
+          return jsonResponse({ error: 'Invalid vocabulary progress' }, 400);
+        }
+        const progressJson = JSON.stringify(progress);
+        if (new TextEncoder().encode(progressJson).byteLength > 262144) {
+          return jsonResponse({ error: 'Progress payload too large' }, 413);
+        }
+        const rateLimit = await checkRateLimit(
+          syncDb,
+          `vocabulary-sync:${username}:${request.headers.get('cf-connecting-ip') || 'ip'}`,
+          60,
+          60000,
+        );
+        if (!rateLimit.ok) return rateLimitedResponse(rateLimit.retryAfter, corsHeaders);
+        await ensureSchemaCached(syncDb);
+        const account = await findUser(syncDb, username);
+        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+          return jsonResponse({ error: 'Invalid username or password' }, 401);
+        }
+        await syncDb.batch([
+          syncDb.prepare(
+            "INSERT INTO user_products (user_id, product_key) VALUES (?, 'vocabulary-expander') ON CONFLICT(user_id, product_key) DO NOTHING"
+          ).bind(account.user_id),
+          syncDb.prepare(`
+            INSERT INTO vocabulary_expander_progress (user_id, progress_json, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+              progress_json = excluded.progress_json,
+              updated_at = excluded.updated_at
+          `).bind(account.user_id, progressJson, new Date().toISOString()),
+        ]);
+        const row = await syncDb.prepare(
+          'SELECT updated_at FROM vocabulary_expander_progress WHERE user_id = ?'
+        ).bind(account.user_id).first();
+        return jsonResponse({ success: true, updated_at: row?.updated_at || null });
       }
 
       // ─── GET /api/sync ──────────────────────────────────────────────────

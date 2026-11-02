@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Data &amp; Account · Manumit</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <meta name="theme-color" content="#f4f6f7" />
+    <link rel="canonical" href="https://manumit.studio/data/" />
+    <meta name="description" content="Learn what Manumit apps store, what stays on your device, and how to permanently delete your Manumit account and synced app data." />
+    <meta property="og:title" content="Your Data &amp; Account · Manumit" />
+    <meta property="og:description" content="Understand Manumit account data, local storage, cloud sync, and request permanent account deletion." />
+    <meta property="og:image" content="https://manumit.studio/icon.png" />
+    <meta property="og:url" content="https://manumit.studio/data/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Manumit" />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/policies/policies.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+        <a class="brand" href="/">Manumit</a>
+        <nav aria-label="Site">
+          <a href="/">Home</a>
+          <div class="nav-drop">
+            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/products/split-task/">Split Task</a>
+              <a href="/products/syllable/">Syllable</a>
+            </div>
+          </div>
+          <a href="/data/" class="active" aria-current="page">Data</a>
+          <div class="nav-drop">
+            <a href="/policies/" class="drop-toggle">Policies <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/policies/privacy/">Privacy Policy</a>
+              <a href="/policies/eula/">EULA</a>
+            </div>
+          </div>
+        </nav>
+        <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page pol-redesign pol-article-page">
+      <div class="policies-head">
+        <h1>Your data, under your control</h1>
+        <p class="lede">A clear guide to what stays on your devices, what syncs with a Manumit account, and how to delete that account.</p>
+      </div>
+
+      <article class="policy-article">
+        <section class="policy-block">
+          <h2>Using apps without an account</h2>
+          <p>Account sign-in is optional in Syllable and in Split Task's Android app. If you continue without backups or use guest mode, your app content stays in local storage on that device or browser and is not uploaded to Manumit for account sync.</p>
+          <p>Uninstalling an app or clearing its browser/app storage removes that local copy. Account deletion does not reach into devices to erase local-only or offline copies.</p>
+        </section>
+
+        <section class="policy-block">
+          <h2>What a Manumit account syncs</h2>
+          <p>A Manumit account is shared across supported apps. When you sign in and use sync, the account and synced product data are stored on Manumit's Cloudflare-hosted service:</p>
+          <ul>
+            <li><strong>Account:</strong> your username and a password hash created on your device. Your plain-text password is not sent to the service.</li>
+            <li><strong>Split Task:</strong> synced tasks, events, categories, notes, and preferences/settings.</li>
+            <li><strong>Syllable:</strong> vocabulary progress needed to restore your deck, including encountered words, mastery scores, placement completion, and progress dates.</li>
+          </ul>
+          <p>Using an account does not upload data from an app you have not signed into or chosen to sync.</p>
+        </section>
+
+        <section class="policy-block">
+          <h2>Delete your Manumit account</h2>
+          <p>Account deletion permanently removes your Manumit account and account-linked cloud data across supported apps, including synced Syllable progress and Split Task data. You must verify your username and password and confirm the permanent deletion.</p>
+          <p>Deletion removes the cloud account and does not automatically erase guest/offline data already stored on your devices. Clear local app/browser storage or uninstall the app separately if you also want to remove those copies.</p>
+          <p><a class="btn primary" href="/data/delete/">Continue to account deletion</a></p>
+        </section>
+
+        <section class="policy-block">
+          <h2>Support requests</h2>
+          <p>Support tickets are stored separately from Manumit account data, so deleting an account does not automatically delete a ticket you submitted. Resolved tickets are automatically removed after one year. To ask about a ticket, <a href="/help/">contact support</a>.</p>
+        </section>
+
+        <section class="policy-block">
+          <h2>More information</h2>
+          <p>See the <a href="/policies/privacy/">Privacy Policy</a> for details about data handling, or <a href="/products/">browse Manumit apps</a>.</p>
+        </section>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid">
+        <div class="col">
+          <h2>Manumit</h2>
+          <div class="blurb">Independent development where free, quality, and privacy are the priorities.</div>
+          <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
+        </div>
+        <div class="col">
+          <h2>Products</h2>
+          <a href="/products/">Browse</a>
+          <a href="/products/split-task/">Split Task</a>
+          <a href="/products/syllable/">Syllable</a>
+        </div>
+        <div class="col">
+          <h2>Site</h2>
+          <a href="/">Home</a>
+          <a href="/products/">Products</a>
+          <a href="/data/">Data</a>
+        </div>
+        <div class="col">
+          <h2>Legal</h2>
+          <a href="/policies/">Policies</a>
+          <a href="/policies/privacy/">Privacy Policy</a>
+          <a href="/policies/eula/">EULA</a>
+        </div>
+      </div>
+      <div class="bottom">© 2026 Manumit · All rights reserved</div>
+    </footer>
+    <script defer src="/shared.js"></script>
+    <script defer src="/nav.js"></script>
+    <script defer src="/help-widget.js"></script>
+  </body>
+</html>

@@ -71,6 +71,33 @@ function bindThemeToggles(btnSel) {
   return { current: current, apply: apply };
 }
 (function () {
+  var siteNav = document.querySelector('.site-header nav');
+  if (siteNav) {
+    var productDropdown = siteNav.querySelector('.nav-drop .drop-menu');
+    if (productDropdown && !productDropdown.querySelector('a[href="/products/syllable/"]')) {
+      var syllableLink = document.createElement('a');
+      syllableLink.href = '/products/syllable/';
+      syllableLink.textContent = 'Syllable';
+      productDropdown.appendChild(syllableLink);
+    }
+
+    if (!siteNav.querySelector('a[href="/data/"]')) {
+      var dataLink = document.createElement('a');
+      dataLink.href = '/data/';
+      dataLink.textContent = 'Data';
+      if (window.location.pathname.replace(/\/+$/, '') === '/data') {
+        dataLink.className = 'active';
+        dataLink.setAttribute('aria-current', 'page');
+      }
+      var policiesDropdown = Array.prototype.slice.call(siteNav.querySelectorAll('.nav-drop')).find(function (drop) {
+        var toggle = drop.querySelector('.drop-toggle');
+        return toggle && toggle.getAttribute('href') === '/policies/';
+      });
+      if (policiesDropdown) siteNav.insertBefore(dataLink, policiesDropdown);
+      else siteNav.appendChild(dataLink);
+    }
+  }
+
   bindToggleList('.nav-drop');
   bindThemeToggles('.theme-toggle');
 })();

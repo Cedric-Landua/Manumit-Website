@@ -16,12 +16,22 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://manumit.studio/products/syllable/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://manumit.studio/help/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://manumit.studio/policies/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://manumit.studio/data/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

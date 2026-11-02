@@ -32,7 +32,8 @@ CREATE TABLE products (
 
 INSERT INTO products (key, name) VALUES
   ('split-task', 'Split Task'),
-  ('study-app', 'Study App');
+  ('study-app', 'Study App'),
+  ('vocabulary-expander', 'Vocabulary Expander');
 
 CREATE TABLE user_products (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -155,6 +156,12 @@ CREATE TABLE split_task_notes (
 CREATE TABLE split_task_sync_versions (
   user_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   version INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE vocabulary_expander_progress (
+  user_id TEXT NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  progress_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE app_state (

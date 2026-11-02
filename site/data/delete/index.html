@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>(function(){try{var t=localStorage.getItem('theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Delete Your Account · Manumit</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <meta name="theme-color" content="#f4f6f7" />
+    <link rel="canonical" href="https://manumit.studio/data/delete/" />
+    <meta name="description" content="Verify your identity and permanently delete your Manumit account and associated cloud data." />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/policies/policies.css" />
+    <link rel="stylesheet" href="/account-deletion.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+        <a class="brand" href="/">Manumit</a>
+        <nav aria-label="Site">
+          <a href="/">Home</a>
+          <div class="nav-drop">
+            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/products/split-task/">Split Task</a>
+              <a href="/products/syllable/">Syllable</a>
+            </div>
+          </div>
+          <a href="/data/" class="active" aria-current="page">Data</a>
+          <div class="nav-drop">
+            <a href="/policies/" class="drop-toggle">Policies <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu">
+              <a href="/policies/privacy/">Privacy Policy</a>
+              <a href="/policies/eula/">EULA</a>
+            </div>
+          </div>
+        </nav>
+        <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="page pol-redesign pol-article-page account-delete-page">
+      <div class="policies-head">
+        <p class="account-delete-eyebrow">Manumit account</p>
+        <h1>Delete your account</h1>
+        <p class="lede">This permanently deletes your Manumit account and the cloud data linked to it across supported apps.</p>
+      </div>
+
+      <section class="account-delete-card" aria-labelledby="delete-card-title">
+        <div class="account-delete-warning">
+          <strong>This action cannot be undone.</strong>
+          <span>Guest or offline data stored on your devices is not erased by this request. Clear app or browser storage separately if you want to remove local copies.</span>
+        </div>
+
+        <div id="delete-message" class="help-form-message" role="status" aria-live="polite" hidden></div>
+
+        <form id="delete-verify-form" class="help-form" autocomplete="on">
+          <h2 id="delete-card-title">Verify your identity</h2>
+          <p>Enter your Manumit username and password. Your password is hashed in your browser before it is sent for verification.</p>
+          <div>
+            <label class="help-form-label" for="delete-username">Username</label>
+            <input id="delete-username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+          </div>
+          <div>
+            <label class="help-form-label" for="delete-password">Password</label>
+            <input id="delete-password" name="password" type="password" autocomplete="current-password" required />
+          </div>
+          <button id="verify-button" class="help-form-submit" type="submit">Verify identity</button>
+        </form>
+
+        <form id="delete-confirm-form" class="help-form" hidden>
+          <h2>Account verified</h2>
+          <p>Signed in as <strong id="verified-username"></strong>. Select the button below to permanently delete your account and cloud data. Your credentials will be verified again by the deletion service.</p>
+          <button id="delete-button" class="account-delete-submit" type="submit">Delete account and cloud data</button>
+        </form>
+
+        <div id="delete-success" class="account-delete-success" role="status" hidden>
+          <h2>Account deleted</h2>
+          <p>Your Manumit account and its associated cloud data have been permanently deleted. Local app/browser data and separately stored support tickets are not deleted by this action.</p>
+          <a class="btn secondary" href="/data/">Back to Data information</a>
+        </div>
+      </section>
+
+      <p class="account-delete-back"><a href="/data/">← Back to Data information</a></p>
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid">
+        <div class="col">
+          <h2>Manumit</h2>
+          <div class="blurb">Independent development where free, quality, and privacy are the priorities.</div>
+          <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
+        </div>
+        <div class="col">
+          <h2>Products</h2>
+          <a href="/products/">Browse</a>
+          <a href="/products/split-task/">Split Task</a>
+          <a href="/products/syllable/">Syllable</a>
+        </div>
+        <div class="col">
+          <h2>Site</h2>
+          <a href="/">Home</a>
+          <a href="/products/">Products</a>
+          <a href="/data/">Data</a>
+        </div>
+        <div class="col">
+          <h2>Legal</h2>
+          <a href="/policies/">Policies</a>
+          <a href="/policies/privacy/">Privacy Policy</a>
+          <a href="/policies/eula/">EULA</a>
+        </div>
+      </div>
+      <div class="bottom">© 2026 Manumit · All rights reserved</div>
+    </footer>
+    <script defer src="/shared.js"></script>
+    <script defer src="/nav.js"></script>
+    <script defer src="/account-deletion.js"></script>
+  </body>
+</html>
