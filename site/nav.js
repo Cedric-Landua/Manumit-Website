@@ -73,30 +73,76 @@ function bindThemeToggles(btnSel) {
 (function () {
   var siteNav = document.querySelector('.site-header nav');
   if (siteNav) {
-    var productDropdown = siteNav.querySelector('.nav-drop .drop-menu');
-    if (productDropdown && !productDropdown.querySelector('a[href="/products/syllable/"]')) {
-      var syllableLink = document.createElement('a');
-      syllableLink.href = '/products/syllable/';
-      syllableLink.textContent = 'Syllable';
-      productDropdown.appendChild(syllableLink);
+    function linkPath(link) {
+      return (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
     }
 
-    if (!siteNav.querySelector('a[href="/data/"]')) {
-      var dataLink = document.createElement('a');
+    function ensureMenuLink(menu, path, label) {
+      var links = Array.prototype.slice.call(menu.querySelectorAll('a')).filter(function (link) {
+        return linkPath(link) === path;
+      });
+      var link = links.shift();
+      if (!link) {
+        link = document.createElement('a');
+        link.href = path + '/';
+        link.textContent = label;
+        menu.appendChild(link);
+      }
+      links.forEach(function (duplicate) { duplicate.remove(); });
+    }
+
+    var productDrop = Array.prototype.slice.call(siteNav.querySelectorAll('.nav-drop')).find(function (drop) {
+      var toggle = drop.querySelector('.drop-toggle');
+      return toggle && linkPath(toggle) === '/products';
+    });
+    var productMenu = productDrop && productDrop.querySelector('.drop-menu');
+    if (productMenu) {
+      ensureMenuLink(productMenu, '/products/split-task', 'Split Task');
+      ensureMenuLink(productMenu, '/products/syllable', 'Syllable');
+    }
+
+    var dataLinks = Array.prototype.slice.call(siteNav.querySelectorAll('a')).filter(function (link) {
+      return linkPath(link) === '/data';
+    });
+    var dataLink = dataLinks.shift();
+    if (!dataLink) {
+      dataLink = document.createElement('a');
       dataLink.href = '/data/';
       dataLink.textContent = 'Data';
-      if (window.location.pathname.replace(/\/+$/, '') === '/data') {
-        dataLink.className = 'active';
-        dataLink.setAttribute('aria-current', 'page');
-      }
+    }
+    dataLinks.forEach(function (duplicate) { duplicate.remove(); });
+    if (/^\/data(?:\/|$)/.test(window.location.pathname)) {
+      dataLink.classList.add('active');
+      dataLink.setAttribute('aria-current', 'page');
+    } else {
+      dataLink.classList.remove('active');
+      dataLink.removeAttribute('aria-current');
+    }
+    if (dataLink.parentNode !== siteNav) {
       var policiesDropdown = Array.prototype.slice.call(siteNav.querySelectorAll('.nav-drop')).find(function (drop) {
         var toggle = drop.querySelector('.drop-toggle');
-        return toggle && toggle.getAttribute('href') === '/policies/';
+        return toggle && linkPath(toggle) === '/policies';
       });
-      if (policiesDropdown) siteNav.insertBefore(dataLink, policiesDropdown);
+      if (policiesDropdown && policiesDropdown.parentNode === siteNav) siteNav.insertBefore(dataLink, policiesDropdown);
       else siteNav.appendChild(dataLink);
     }
   }
+
+  document.querySelectorAll('.site-footer .col').forEach(function (column) {
+    var heading = column.querySelector('h2');
+    if (!heading || heading.textContent.trim() !== 'Products') return;
+    var productLinks = Array.prototype.slice.call(column.querySelectorAll('a')).filter(function (link) {
+      return (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') === '/products/syllable';
+    });
+    var syllableLink = productLinks.shift();
+    if (!syllableLink) {
+      syllableLink = document.createElement('a');
+      syllableLink.href = '/products/syllable/';
+      syllableLink.textContent = 'Syllable';
+      column.appendChild(syllableLink);
+    }
+    productLinks.forEach(function (duplicate) { duplicate.remove(); });
+  });
 
   bindToggleList('.nav-drop');
   bindThemeToggles('.theme-toggle');

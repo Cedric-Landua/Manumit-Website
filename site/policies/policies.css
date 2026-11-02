@@ -181,6 +181,7 @@
   padding: 0; border: 0;
 }
 .prod-redesign .prod-tags li::before { content: ""; display: inline-block; width: 4px; height: 4px; margin: 0 8px 3px 0; border-radius: 50%; background: var(--brand); }
+.prod-redesign .split-task-product-card .prod-tags { display: grid; justify-items: start; gap: 7px; }
 
 /* Placeholder card remains a normal neutral card. */
 .prod-redesign .prod-card--soon { background: var(--surface); }
