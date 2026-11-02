@@ -3,11 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./syllable-favicon.png" />
+    <script>
+      try {
+        var theme = localStorage.getItem('theme');
+        document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      } catch {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    </script>
     <meta name="theme-color" content="#f6f4ef" />
     <meta name="description" content="A new word every day, with quick quizzes to help it stick." />
-    <title>Syllable — A word a day</title>
-    <script type="module" crossorigin src="./assets/index-BTd3ESOy.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BjPRko1Z.css">
+    <title>Syllable - A word a day</title>
+    <script type="module" crossorigin src="./assets/index-BNSI-f3i.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BePzC-eg.css">
   </head>
   <body>
     <div id="root"></div>
