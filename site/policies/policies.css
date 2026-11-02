@@ -119,7 +119,7 @@
 .product-card-heading .pol-card-icon { width: 48px; height: 48px; overflow: hidden; border: 0; border-radius: 10px; background: transparent; color: inherit; }
 .product-card-heading .pol-card-icon svg { display: block; width: 100%; height: 100%; }
 .product-card-heading h2 { margin: 0; }
-.product-card-heading .syllable-card-logo { width: 72px; }
+.product-card-heading .syllable-card-logo { width: 72px; border-radius: 14px; }
 .pol-redesign .policy-card h2 { font-size: 20px; font-weight: 600; }
 .pol-redesign .policy-card .key-points { list-style: disc; padding-left: 22px; gap: 8px; }
 .pol-redesign .policy-card .key-points li { display: list-item; font-size: 14px; line-height: 1.55; }
@@ -179,6 +179,7 @@
 .prod-redesign .policies-head h1 { font-size: clamp(30px, 5vw, 40px); font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
 .prod-redesign .policies-head .lede { font-size: 16px; max-width: 620px; }
 .prod-redesign .card-grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+.prod-redesign .product-card-heading { margin-bottom: 8px; }
 .prod-redesign .prod-tags { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 0; padding: 0; list-style: none; }
 .prod-redesign .prod-tags li {
   font-size: 14px; font-weight: 400; line-height: 1.5;
@@ -187,6 +188,7 @@
 }
 .prod-redesign .prod-tags li::before { content: ""; display: inline-block; width: 4px; height: 4px; margin: 0 8px 3px 0; border-radius: 50%; background: var(--brand); }
 .prod-redesign .split-task-product-card .prod-tags { display: grid; justify-items: start; gap: 7px; }
+.prod-redesign .prod-card--soon .prod-tags { display: grid; justify-items: start; gap: 7px; }
 
 /* Placeholder card remains a normal neutral card. */
 .prod-redesign .prod-card--soon { background: var(--surface); }
