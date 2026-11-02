@@ -119,7 +119,7 @@
 .product-card-heading .pol-card-icon { width: 48px; height: 48px; overflow: hidden; border: 0; border-radius: 10px; background: transparent; color: inherit; }
 .product-card-heading .pol-card-icon svg { display: block; width: 100%; height: 100%; }
 .product-card-heading h2 { margin: 0; }
-.product-card-heading .syllable-card-logo { width: 72px; border-radius: 14px; }
+.product-card-heading .syllable-card-logo { width: 72px; border-radius: 10px; }
 .pol-redesign .policy-card h2 { font-size: 20px; font-weight: 600; }
 .pol-redesign .policy-card .key-points { list-style: disc; padding-left: 22px; gap: 8px; }
 .pol-redesign .policy-card .key-points li { display: list-item; font-size: 14px; line-height: 1.55; }
@@ -232,7 +232,7 @@
 
 /* Download/access cards: three across on wide screens (2 → 1 as it narrows). */
 .prod-redesign .get-grid { grid-template-columns: repeat(3, 1fr); }
-.prod-redesign .syllable-get-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.prod-redesign .syllable-get-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1024px) { .prod-redesign .get-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 680px)  { .prod-redesign .get-grid { grid-template-columns: 1fr; } }
 /* The Android card's action is a button, not a .card-link — pin it to the

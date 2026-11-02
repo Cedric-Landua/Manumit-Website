@@ -654,6 +654,50 @@ export default {
         return jsonResponse({ success: true, username });
       }
 
+      // ─── POST /api/delete-product-data ──────────────────────────────────
+      // Remove one product's cloud data without deleting the Manumit account.
+      if (url.pathname === '/api/delete-product-data' && request.method === 'POST') {
+        const delDb = env['ST-DATABASE'];
+        let rawDel;
+        try {
+          rawDel = await request.json();
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+        const username = normUsername(rawDel?.username);
+        const password_hash = normHash(rawDel?.password_hash);
+        const productKey = rawDel?.product_key;
+        if (!username || !password_hash) {
+          return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
+        }
+        if (productKey !== 'split-task' && productKey !== 'vocabulary-expander') {
+          return jsonResponse({ error: 'Unsupported product' }, 400);
+        }
+
+        const ip = request.headers.get('cf-connecting-ip') || 'ip';
+        const rl = await checkRateLimit(delDb, `delete-product-data:${ip}`, 10, 600000);
+        if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
+        if (!(await checkUserPassword(delDb, username, password_hash))) {
+          return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
+        }
+
+        const account = await findUser(delDb, username);
+        if (!account) return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
+        await ensureSchemaCached(delDb);
+        const statements = productKey === 'split-task'
+          ? [
+            'DELETE FROM split_task_items WHERE user_id = ?',
+            'DELETE FROM split_task_notes WHERE user_id = ?',
+            'DELETE FROM split_task_categories WHERE user_id = ?',
+            'DELETE FROM split_task_settings WHERE user_id = ?',
+            'DELETE FROM split_task_sync_versions WHERE user_id = ?',
+          ]
+          : ['DELETE FROM vocabulary_expander_progress WHERE user_id = ?'];
+        await delDb.batch(statements.map(sql => delDb.prepare(sql).bind(account.user_id)));
+
+        return jsonResponse({ success: true, message: 'Product data deleted successfully' });
+      }
+
       // ─── POST /api/delete-account ───────────────────────────────────────
       if (url.pathname === '/api/delete-account' && request.method === 'POST') {
         const delDb = env['ST-DATABASE'];
