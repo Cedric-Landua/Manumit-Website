@@ -232,6 +232,7 @@
 
 /* Download/access cards: three across on wide screens (2 → 1 as it narrows). */
 .prod-redesign .get-grid { grid-template-columns: repeat(3, 1fr); }
+.prod-redesign .syllable-get-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 1024px) { .prod-redesign .get-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 680px)  { .prod-redesign .get-grid { grid-template-columns: 1fr; } }
 /* The Android card's action is a button, not a .card-link — pin it to the
