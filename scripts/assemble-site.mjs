@@ -12,18 +12,15 @@ const websiteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const appsRoot = path.dirname(websiteRoot); // the folder holding every app folder
 const siteDir = path.join(websiteRoot, 'site');
 const dist = path.join(websiteRoot, 'dist');
-// Pre-built Split Task app output (committed to this repo) so Cloudflare Pages
-// can deploy the app even though the Split Task source lives in a sibling repo.
-const APP_FALLBACK_ROOT = path.join(websiteRoot, 'site', 'split-task-app');
-
 // Every app on manumit.studio: folder (next to Website/), product (its Vite
 // outDir dist/products/<product>), mount (deploy path; app never occupies
 // /products/<product>/ itself). Product card + nav + sitemap point at the
 // shell product page, never straight into the app. Adding an entry here is
-// the last step of "Adding the next app" in README.md.
+// the last step of "Adding the next app" in README.md. Apps whose source is
+// maintained in a sibling repository need a committed deploy fallback.
 const APPS = [
-  { folder: 'Split Task', product: 'split-task', mount: 'products/split-task/app' },
-  { folder: 'Vocabulary Expander', product: 'syllable', mount: 'products/syllable/app' },
+  { folder: 'Split Task', product: 'split-task', mount: 'products/split-task/app', fallback: 'site/split-task-app' },
+  { folder: 'Vocabulary Expander', product: 'syllable', mount: 'products/syllable/app', fallback: 'site/syllable-app' },
   // { folder: 'Study app', product: 'study', mount: 'products/study/app' },   <- add once Study ships
 ];
 
@@ -40,7 +37,7 @@ if (!fs.existsSync(siteDir)) {
 const appMount = (app) => app.mount || `products/${app.product}`;
 const appRoot = (app) => {
   const r = path.join(appsRoot, app.folder);
-  return fs.existsSync(r) ? r : APP_FALLBACK_ROOT;
+  return fs.existsSync(r) ? r : path.join(websiteRoot, app.fallback);
 };
 const appBuild = (app) => path.join(appRoot(app), 'dist', 'products', app.product);
 const mounts = APPS.map((app) => path.resolve(dist, appMount(app)));

@@ -11,6 +11,8 @@ other apps as they arrive).
 ```
 ├── site/                     ← STATIC SHELL - what visitors load from manumit.studio
 │   ├── index.html               home page                → /
+│   ├── split-task-app/          pre-built fallback for CI deploys
+│   ├── syllable-app/            pre-built fallback for CI deploys
 │   ├── products/index.html      product cards            → /products/
 │   ├── products/split-task/     Split Task product page  → /products/split-task/
 │   ├── products/syllable/       Syllable product page    → /products/syllable/
@@ -63,7 +65,8 @@ npm run assemble   # compose dist/ from the apps' existing build output
 `npm run build` does four things:
 
 1. runs `npm run build` in every app listed in `scripts/assemble-site.mjs`
-   (`APPS`) - each app still builds into its own `dist/products/<product>/`;
+   (`APPS`) when its sibling source folder is available; otherwise it uses the
+   committed fallback bundle under `site/<app>-app/`;
 2. mounts each of those app folders at its `mount` path in `dist/`
    (`products/split-task/app`), so the app never occupies the product page URL;
 3. clears `dist/` and copies `site/` in, file by file, skipping every app mount,
@@ -96,6 +99,13 @@ API endpoint (all `/api/*` routes). `schema-d1.sql` defines its shared D1:
 stable Manumit user IDs, login identities, product access, and product-owned
 data tables. `schema-d1-legacy.sql` records the previous username-keyed layout.
 The support-ticket database remains a separate binding.
+
+When updating an app maintained in a sibling repository, refresh its committed
+fallback bundle after building it: copy
+`../Vocabulary Expander/dist/products/syllable/` to
+`site/syllable-app/dist/products/syllable/`. The matching app entry in
+`scripts/assemble-site.mjs` points CI at that fallback when the source checkout
+is unavailable.
 
 ## Shared-account database cutover
 
