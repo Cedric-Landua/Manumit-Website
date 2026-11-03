@@ -654,6 +654,100 @@ export default {
         return jsonResponse({ success: true, username });
       }
 
+      // ─── POST /api/account/username ─────────────────────────────────────
+      // Rename the shared login identity without changing its stable user ID,
+      // which keeps all product data and memberships attached to the account.
+      if (url.pathname === '/api/account/username' && request.method === 'POST') {
+        const accountDb = env['ST-DATABASE'];
+        const ip = request.headers.get('cf-connecting-ip') || 'ip';
+        const rl = await checkRateLimit(accountDb, `username-change:${ip}`, 10, 600000);
+        if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
+
+        let raw;
+        try {
+          raw = await request.json();
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+        const username = normUsername(raw?.username);
+        const newUsername = normUsername(raw?.new_username);
+        const password_hash = normHash(raw?.password_hash);
+        const secureNotesWrappedKey = raw?.secure_notes_wrapped_key;
+        if (!username || !newUsername || !password_hash) {
+          return jsonResponse({ error: 'Valid current username, new username, and password required' }, 400);
+        }
+        if (secureNotesWrappedKey !== undefined
+          && (typeof secureNotesWrappedKey !== 'string'
+            || !/^WRAP1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(secureNotesWrappedKey)
+            || secureNotesWrappedKey.length > 2048)) {
+          return jsonResponse({ error: 'Invalid secure notes key' }, 400);
+        }
+
+        const account = await findUser(accountDb, username);
+        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+          return jsonResponse({ error: 'Invalid username or password' }, 401);
+        }
+        if (newUsername === username) {
+          const version = await accountDb.prepare(
+            'SELECT version FROM split_task_sync_versions WHERE user_id = ?'
+          ).bind(account.user_id).first();
+          return jsonResponse({ success: true, username, version: Number(version?.version) || 0 });
+        }
+
+        const identityOwner = await accountDb.prepare(`
+          SELECT user_id FROM user_identities
+          WHERE provider = 'username_password' AND normalized_identifier = ?
+        `).bind(newUsername).first();
+        if (identityOwner && identityOwner.user_id !== account.user_id) {
+          return jsonResponse({ error: 'That username is already taken. Please choose another one.' }, 409);
+        }
+
+        await ensureSchemaCached(accountDb);
+        const settings = await accountDb.prepare(
+          'SELECT secure_notes_wrapped_key FROM split_task_settings WHERE user_id = ?'
+        ).bind(account.user_id).first();
+        if (settings?.secure_notes_wrapped_key && !secureNotesWrappedKey) {
+          return jsonResponse({ error: 'Refresh the app and try changing your username again.' }, 409);
+        }
+
+        try {
+          const statements = [
+            accountDb.prepare(`
+              UPDATE user_identities
+              SET identifier = ?, normalized_identifier = ?
+              WHERE user_id = ? AND provider = 'username_password'
+            `).bind(newUsername, newUsername, account.user_id),
+          ];
+          if (secureNotesWrappedKey) {
+            statements.push(settings
+              ? accountDb.prepare(`
+                UPDATE split_task_settings SET secure_notes_wrapped_key = ?
+                WHERE user_id = ?
+              `).bind(secureNotesWrappedKey, account.user_id)
+              : accountDb.prepare(`
+                INSERT INTO split_task_settings (user_id, secure_notes_wrapped_key)
+                VALUES (?, ?)
+              `).bind(account.user_id, secureNotesWrappedKey));
+          }
+          statements.push(accountDb.prepare(`
+            INSERT INTO split_task_sync_versions (user_id, version) VALUES (?, 1)
+            ON CONFLICT(user_id) DO UPDATE SET version = version + 1
+          `).bind(account.user_id));
+          await accountDb.batch(statements);
+        } catch (err) {
+          if (/UNIQUE constraint failed/i.test(err?.message || '')
+            && /user_identities\.(provider|normalized_identifier)/i.test(err?.message || '')) {
+            return jsonResponse({ error: 'That username is already taken. Please choose another one.' }, 409);
+          }
+          throw err;
+        }
+
+        const version = await accountDb.prepare(
+          'SELECT version FROM split_task_sync_versions WHERE user_id = ?'
+        ).bind(account.user_id).first();
+        return jsonResponse({ success: true, username: newUsername, version: Number(version?.version) || 0 });
+      }
+
       // ─── POST /api/delete-product-data ──────────────────────────────────
       // Remove one product's cloud data without deleting the Manumit account.
       if (url.pathname === '/api/delete-product-data' && request.method === 'POST') {
