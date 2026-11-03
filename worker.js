@@ -707,7 +707,7 @@ export default {
           'SELECT secure_notes_wrapped_key FROM split_task_settings WHERE user_id = ?'
         ).bind(account.user_id).first();
         if (settings?.secure_notes_wrapped_key && !secureNotesWrappedKey) {
-          return jsonResponse({ error: 'Refresh the app and try changing your username again.' }, 409);
+          return jsonResponse({ error: 'To preserve your Split Task secure notes, change your username from the Split Task app.' }, 409);
         }
 
         try {
