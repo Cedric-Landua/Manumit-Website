@@ -19,7 +19,7 @@ npm-debug.log*
 
 # Env / secrets
 .env
-.env.local
+.env.*
 
 # IDE
 .vscode/*

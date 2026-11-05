@@ -273,6 +273,23 @@ async function ensureTicketsTable(ticketsDb) {
   }
 }
 
+async function ensureVocabularyAnswerReviewsTable(ticketsDb) {
+  await ticketsDb.prepare(`
+    CREATE TABLE IF NOT EXISTS vocabulary_answer_reviews (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      word_id TEXT NOT NULL,
+      word TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+  await ticketsDb.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_vocabulary_answer_reviews_word
+    ON vocabulary_answer_reviews (word_id, created_at)
+  `).run();
+}
+
 // Constant-time string compare (login / sync-auth: no early-exit tells).
 function timingSafeEqual(a, b) {
   const sa = String(a || ''), sb = String(b || '');
@@ -1299,6 +1316,56 @@ export default {
           console.error('[sync] push failed:', err?.stack || err?.message || err);
           return jsonResponse({ error: 'Sync failed: ' + (err?.message || 'unknown') }, 400);
         }
+      }
+
+      // ─── POST /api/vocabulary-answer-reviews ────────────────────────────
+      if (url.pathname === '/api/vocabulary-answer-reviews' && request.method === 'POST') {
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON body' }, 400);
+        }
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          return jsonResponse({ error: 'Invalid request body' }, 400);
+        }
+
+        const username = normUsername(body.username);
+        const passwordHash = normHash(body.password_hash);
+        if (!username || !passwordHash) {
+          return jsonResponse({ error: 'Sign in is required to submit an answer for review' }, 401);
+        }
+        const user = await findUser(env['ST-DATABASE'], username);
+        if (!user || !timingSafeEqual(user.password_hash, passwordHash)) {
+          return jsonResponse({ error: 'Sign in is required to submit an answer for review' }, 401);
+        }
+
+        const rl = await checkRateLimit(
+          env['ST-DATABASE'],
+          `vocabulary-answer-review:${user.user_id}`,
+          20,
+          3600000,
+        );
+        if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
+
+        const wordId = typeof body.word_id === 'string' ? body.word_id.trim() : '';
+        const word = typeof body.word === 'string' ? body.word.trim() : '';
+        const answer = typeof body.answer === 'string' ? body.answer.trim() : '';
+        if (!/^[a-z0-9][a-z0-9-]{0,79}$/.test(wordId) || !word || word.length > 100) {
+          return jsonResponse({ error: 'A valid vocabulary word is required' }, 400);
+        }
+        if (!answer || answer.length > 1000) {
+          return jsonResponse({ error: 'Answer must be between 1 and 1000 characters' }, 400);
+        }
+
+        const ticketsDb = await ticketDb(env);
+        await ensureVocabularyAnswerReviewsTable(ticketsDb);
+        const id = crypto.randomUUID();
+        await ticketsDb.prepare(`
+          INSERT INTO vocabulary_answer_reviews (id, user_id, word_id, word, answer)
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(id, user.user_id, wordId, word, answer).run();
+        return jsonResponse({ success: true, id }, 201);
       }
 
       // ─── POST /api/tickets ───────────────────────────────────────────────
