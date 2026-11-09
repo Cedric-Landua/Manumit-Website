@@ -77,16 +77,6 @@
 }
 .draft-banner svg { flex-shrink: 0; }
 
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) .draft-banner, html[data-theme="dark"] .draft-banner { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); color: #f59e0b; }
-  html:not([data-theme="light"]) .badge.draft, html[data-theme="dark"] .badge.draft { background: rgba(245, 158, 11, 0.16); color: #f59e0b; }
-  html:not([data-theme="light"]) .badge.ready, html[data-theme="dark"] .badge.ready { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
-  html:not([data-theme="light"]) .subtabs a:hover, html[data-theme="dark"] .subtabs a:hover { background: rgba(255, 255, 255, 0.06); }
-  html:not([data-theme="light"]) .subtabs a.active, html[data-theme="dark"] .subtabs a.active { background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 -2px 0 var(--accent); }
-  html:not([data-theme="light"]) .faq-item[open] summary::after,
-  html[data-theme="dark"] .faq-item[open] summary::after { color: #202a30; }
-}
-
 /* ══════════════════════════════════════════════════════════════════════════
    POLICIES REDESIGN (v136) — overview + privacy/eula articles.
    Scoped under .pol-redesign / .pol-article-page so /products/ is untouched.

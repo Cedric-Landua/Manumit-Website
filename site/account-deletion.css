@@ -12,7 +12,6 @@
   background: rgba(220, 38, 38, 0.06); color: var(--text); font-size: 14px; line-height: 1.55;
 }
 .account-delete-warning strong { color: #b91c1c; }
-html[data-theme="dark"] .account-delete-warning strong { color: #fca5a5; }
 .account-delete-card .help-form h2 { margin: 0; color: var(--text); font-size: 20px; font-weight: 600; }
 .account-delete-card .help-form > p { margin: 0; color: var(--text-light); font-size: 14px; line-height: 1.6; }
 .account-delete-card .help-form input[type="password"] {

@@ -1,10 +1,4 @@
-// Nav dropdowns + theme toggles (JS-owned; never CSS :hover — it latches on
-// hybrid touch laptops). Reusable: bindToggleList + bindThemeToggles.
-function setPressedState(buttons, pressed) {
-  var val = pressed ? 'true' : 'false';
-  for (var i = 0; i < buttons.length; i++) buttons[i].setAttribute('aria-pressed', val);
-  return val;
-}
+// Nav dropdowns are JS-owned; CSS :hover latches on hybrid touch laptops.
 function setToggleState(ddl, open) {
   ddl.classList.toggle('is-open', open);
   var toggle = ddl.querySelector('.drop-toggle');
@@ -49,27 +43,6 @@ function bindToggleList(rootSel) {
   window.addEventListener('pageshow', function () { closeAll(null); });
 }
 
-// Theme toggle: <head> pre-paint script sets data-theme; this wires buttons
-// (localStorage `theme`, dark by default) and syncs aria-pressed.
-function bindThemeToggles(btnSel) {
-  var root = document.documentElement;
-  function current() {
-    var stored = root.getAttribute('data-theme');
-    if (stored === 'light' || stored === 'dark') return stored;
-    return 'dark';
-  }
-  function apply(theme) {
-    root.setAttribute('data-theme', theme);
-    try { localStorage.setItem('theme', theme); } catch (e) {}
-    setPressedState(document.querySelectorAll(btnSel), theme === 'dark');
-    return theme;
-  }
-  document.querySelectorAll(btnSel).forEach(function (btn) {
-    btn.addEventListener('click', function () { apply(current() === 'dark' ? 'light' : 'dark'); });
-  });
-  setPressedState(document.querySelectorAll(btnSel), current() === 'dark');
-  return { current: current, apply: apply };
-}
 (function () {
   var siteNav = document.querySelector('.site-header nav');
   if (siteNav) {
@@ -145,5 +118,4 @@ function bindThemeToggles(btnSel) {
   });
 
   bindToggleList('.nav-drop');
-  bindThemeToggles('.theme-toggle');
 })();
