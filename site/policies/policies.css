@@ -6,7 +6,7 @@
 .faq-item summary::after { content: "+"; margin-left: auto; flex-shrink: 0;
   width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
   background: var(--brand-50); color: var(--brand); font-size: 16px; font-weight: 500; }
-.faq-item[open] summary::after { content: "–"; background: var(--brand); color: #fff; }
+.faq-item[open] summary::after { content: "–"; background: var(--brand-dark); color: #fff; }
 .faq-item p { margin: 0; padding: 0 16px 16px; font-size: 14px; color: var(--text-light); line-height: 1.65; }
 /* Hover-peek + click-pin (JS adds .peek while hovering, .pinned on click).
    Grid-rows trick animates the open/close smoothly. */
@@ -50,7 +50,7 @@
 .badge.draft { background: rgba(245, 158, 11, 0.14); color: #b45309; }
 .policy-card .summary { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
 .policy-card .key-points { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--text); }
-.policy-card .card-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--brand); }
+.policy-card .card-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--brand-dark); }
 .policy-card .card-link:hover { color: var(--brand-strong); }
 .policy-card .card-link.soon { color: var(--text-light); font-weight: 500; }
 /* Non-clickable placeholder: no lift. */
@@ -67,7 +67,7 @@
 .policy-article h3 { margin: 16px 0 6px; font-size: 15px; font-weight: 600; color: var(--text); }
 .policy-article p, .policy-article li { line-height: 1.7; font-size: 16px; }
 .policy-article ul { padding-left: 20px; margin: 8px 0 0; }
-.policy-article a { color: var(--brand); text-decoration: underline; }
+.policy-article a { color: var(--brand-dark); text-decoration: underline; }
 
 /* EULA draft placeholder */
 .draft-banner {
@@ -101,7 +101,7 @@
 .pol-card-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
-  color: var(--brand);
+  color: var(--brand-dark);
   background: var(--brand-50);
   border: 1px solid var(--border);
 }
@@ -115,7 +115,7 @@
 .pol-redesign .policy-card .key-points li { display: list-item; font-size: 14px; line-height: 1.55; }
 .pol-redesign .policy-card .key-points li::marker { color: var(--brand); }
 .pol-redesign .policy-card .key-points li svg { display: none; }
-.pol-redesign .policy-card .card-link { margin-top: auto; color: var(--brand); }
+.pol-redesign .policy-card .card-link { margin-top: auto; color: var(--brand-dark); }
 .pol-arrow { transition: color 0.15s ease; }
 
 /* Article pages (privacy + eula): shared accent per page */

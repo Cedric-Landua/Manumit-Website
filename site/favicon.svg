@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" standalone="no"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Manumit tab icon: white M on a light-blue squircle -->
-  <path d="M 128 0 H 384 C 455 0 512 57 512 128 V 384 C 512 455 455 512 384 512 H 128 C 57 512 0 455 0 384 V 128 C 0 57 57 0 128 0 Z" fill="#8BC4D8"/>
+  <!-- Manumit tab icon: white M on a blue squircle -->
+  <path d="M 128 0 H 384 C 455 0 512 57 512 128 V 384 C 512 455 455 512 384 512 H 128 C 57 512 0 455 0 384 V 128 C 0 57 57 0 128 0 Z" fill="#0E92EB"/>
   <path d="M 152 344 L 152 184 L 256 272 L 360 184 L 360 344" fill="none" stroke="#FFFFFF" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

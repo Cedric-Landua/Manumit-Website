@@ -1,6 +1,6 @@
 .account-delete-page { max-width: 760px; }
 .account-delete-page .policies-head { margin: 0 auto 28px; }
-.account-delete-eyebrow { margin: 0 0 8px; color: var(--brand); font-size: 13px; font-weight: 600; }
+.account-delete-eyebrow { margin: 0 0 8px; color: var(--brand-dark); font-size: 13px; font-weight: 600; }
 .account-delete-card {
   max-width: 560px; margin: 0 auto; padding: 24px;
   background: var(--surface); border: 1px solid var(--border);
@@ -30,7 +30,7 @@
 .account-delete-success h2 { margin: 0; font-size: 22px; color: var(--text); }
 .account-delete-success p { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
 .account-delete-back { max-width: 560px; margin: 20px auto 0; font-size: 14px; }
-.account-delete-back a { color: var(--brand); text-decoration: underline; }
+.account-delete-back a { color: var(--brand-dark); text-decoration: underline; }
 .account-delete-card [hidden] { display: none !important; }
 @media (max-width: 600px) {
   .account-delete-page { padding-top: 32px; }
