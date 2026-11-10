@@ -919,65 +919,14 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-pillars .goal-card p { font-size: 15px; line-height: 1.7; color: var(--text-light); }
 /* Featured product bridge between the studio principles and implementation stack. */
 .mm-featured { width: min(var(--container), calc(100% - 48px)); margin: 48px auto 0;
-  display: grid; grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr);
-  align-items: center; gap: 40px; }
-.mm-featured-copy { max-width: 380px; }
+  display: grid; grid-template-columns: 1fr; }
+.mm-featured-copy { max-width: 560px; }
 .mm-featured-label { margin: 0 0 8px; color: var(--brand-dark); font-size: 13px; font-weight: 600; }
 .mm-featured-copy h2 { margin: 0 0 12px; color: var(--text); font-family: var(--font-display);
   font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -0.02em; }
 .mm-featured-copy > p:not(.mm-featured-label) { margin: 0; color: var(--text-light); font-size: 16px; line-height: 1.65; }
 .mm-featured-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .mm-featured-actions .btn { padding: 10px 14px; font-size: 14px; }
-.mm-preview { min-width: 0; padding: 16px; border: 1px solid var(--border);
-  border-radius: 14px; background: var(--surface); color: var(--text); }
-.mm-preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-.mm-preview-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display);
-  font-size: 14px; font-weight: 600; white-space: nowrap; }
-.mm-preview-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px;
-  background: var(--brand); color: var(--bg); font-size: 13px; }
-.mm-preview-mark svg { width: 15px; height: 15px; display: block; }
-.mm-preview-views { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border);
-  border-radius: 8px; background: var(--bg); }
-.mm-preview-view { min-width: 42px; padding: 5px 8px; border: 0; border-radius: 5px;
-  background: transparent; color: var(--text-light); font: inherit; font-size: 12px; cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease; }
-.mm-preview-view:hover { color: var(--text); }
-.mm-preview-view.is-active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
-.mm-preview-view:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.mm-preview-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 0; color: var(--text-light); font-size: 12px; }
-.mm-preview-caption strong { color: var(--text); font-weight: 500; }
-.mm-preview-panel { min-height: 160px; }
-.mm-preview-panel[hidden] { display: none; }
-.mm-preview-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-  min-width: 560px; border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
-.mm-preview-day { display: flex; flex-direction: column; min-height: 144px; padding: 10px 8px;
-  gap: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.mm-preview-day > span { color: var(--text-light); font-size: 11px; }
-.mm-preview-day > strong { color: var(--text); font-size: 14px; font-weight: 500; }
-.mm-preview-day > i { margin-top: 6px; padding: 6px; border-left: 2px solid var(--brand);
-  border-radius: 0 4px 4px 0; background: var(--brand-50); color: var(--text);
-  font-size: 10px; font-style: normal; line-height: 1.35; }
-.mm-preview-panel--day { min-height: 160px; }
-.mm-preview-day-heading { display: flex; align-items: baseline; gap: 8px; padding: 0 0 10px;
-  color: var(--text-light); font-size: 12px; }
-.mm-preview-day-heading strong { color: var(--text); font-size: 16px; font-weight: 500; }
-.mm-preview-tasks { display: grid; gap: 8px; }
-.mm-preview-tasks > div { display: grid; grid-template-columns: 56px 1fr; gap: 10px;
-  align-items: center; min-height: 32px; border-bottom: 1px solid var(--border); font-size: 13px; }
-.mm-preview-tasks time { color: var(--text-light); font-size: 12px; font-variant-numeric: tabular-nums; }
-.mm-preview-tasks > div > span { padding-left: 8px; border-left: 2px solid var(--brand); }
-.mm-preview-month { max-width: 560px; margin: 0 auto; }
-.mm-preview-weekdays, .mm-preview-month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.mm-preview-weekdays { padding-bottom: 6px; color: var(--text-light); text-align: center; font-size: 11px; }
-.mm-preview-month-grid > span { position: relative; display: grid; place-items: center; min-height: 27px;
-  border-top: 1px solid var(--border); color: var(--text); font-size: 11px; }
-.mm-preview-month-grid > span.is-muted { color: var(--text-light); opacity: 0.65; }
-.mm-preview-month-grid > span.has-task::after { position: absolute; bottom: 3px; width: 3px; height: 3px;
-  border-radius: 50%; background: var(--brand); content: ""; }
-.mm-preview-month-grid > span.is-selected { color: var(--brand-dark); font-weight: 600; }
-.mm-featured .mm-preview-panel { overflow-x: auto; scrollbar-color: var(--border) transparent; }
 /* Layered stack — brand colors intact, grouped by where things run; each row
    lays out card · simple isometric plate · card. Hovering the plate grows the
    whole row; hovering a card grows only that card. */

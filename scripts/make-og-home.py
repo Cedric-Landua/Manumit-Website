@@ -8,11 +8,11 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 
 W, H = 1200, 630
-BACKGROUND = (231, 242, 246)
-STRIPE = (203, 225, 233)
+BACKGROUND = (255, 255, 255)
+STRIPE = (234, 245, 253)
 TEXT = (32, 42, 48)
-ACCENT = (32, 90, 115)
-ICON = (91, 137, 155)
+ACCENT = (7, 95, 155)
+ICON = (14, 146, 235)
 
 
 def font(size, bold=True):
