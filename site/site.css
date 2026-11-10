@@ -4,6 +4,7 @@
 :root {
   --brand: #0e92eb;
   --brand-dark: #075f9b;
+  --brand-hover: #064a78;
   --brand-tint: #8dc9f4;
   --brand-50: rgba(14, 146, 235, 0.08);
   --brand-100: rgba(14, 146, 235, 0.14);
@@ -74,8 +75,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 
 /* Buttons. */
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 600; line-height: 1; cursor: pointer; text-decoration: none; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
-.btn.primary { background: var(--brand); color: #08283e; }
-.btn.primary:hover { background: var(--brand-dark); color: #fff; }
+.btn.primary { background: var(--brand-dark); color: #fff; }
+.btn.primary:hover { background: var(--brand-hover); color: #fff; }
 .btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
 .btn.secondary:hover { border-color: var(--brand); color: var(--brand-dark); }
 /* Buy Me a Coffee keeps its own yellow/black brand pair so the cup stays recognisable. */
@@ -126,7 +127,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 /* Support link sits directly under "Read my policies". */
 .hero .actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .hero-panel {
-  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+  background: #eaf5fd; color: var(--text); border: 1px solid #d4e9f8; border-radius: 12px; padding: 24px;
 }
 .hero-panel-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-light); margin-bottom: 16px; }
 .hero-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
@@ -188,8 +189,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .portfolio-strip h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); }
 .portfolio-strip p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-light); max-width: 54ch; }
 .portfolio-strip .actions { display: flex; flex-shrink: 0; }
-.portfolio-strip .btn.primary { background: var(--brand); color: #08283e; }
-.portfolio-strip .btn.primary:hover { background: var(--brand-dark); color: #fff; }
+.portfolio-strip .btn.primary { background: var(--brand-dark); color: #fff; }
+.portfolio-strip .btn.primary:hover { background: var(--brand-hover); color: #fff; }
 
 .contact-strip { text-align: left; margin: 64px auto 0; max-width: 980px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; display: flex; flex-direction: column; gap: 16px; }
 .contact-strip .contact-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
@@ -241,12 +242,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   position: fixed; bottom: 24px; right: 24px; z-index: 200;
   display: inline-flex; align-items: center; gap: 9px;
   padding: 12px 16px; border-radius: 8px; border: none;
-  background: var(--brand); color: #08283e;
+  background: var(--brand-dark); color: #fff;
   font-family: var(--font-display); font-size: 14px; font-weight: 600;
   cursor: pointer; transition: background-color 0.15s ease;
 }
-.help-fab:hover { background: var(--brand-dark); }
-.help-fab:active { background: var(--brand-dark); }
+.help-fab:hover { background: var(--brand-hover); }
+.help-fab:active { background: var(--brand-hover); }
 .help-fab svg { width: 17px; height: 17px; display: block; flex-shrink: 0; }
 .help-fab[aria-expanded="true"] .help-fab-icon-open { display: none; }
 .help-fab[aria-expanded="true"] .help-fab-icon-close { display: block; }
@@ -310,11 +311,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .help-form input[type="email"]:focus.is-invalid { border-color: var(--brand); }
 .help-form .help-form-submit {
   padding: 12px 16px; border-radius: 8px; border: none;
-  background: var(--brand); color: #08283e; font-family: var(--font-display);
+  background: var(--brand-dark); color: #fff; font-family: var(--font-display);
   font-size: 14px; font-weight: 600; cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.help-form .help-form-submit:hover { background: var(--brand-dark); }
+.help-form .help-form-submit:hover { background: var(--brand-hover); }
 .help-form .help-form-submit:disabled { opacity: 0.6; cursor: default; }
 .help-form .required-star { color: #dc2626; font-weight: 600; }
 .help-form-message { font-size: 14px; line-height: 1.55; border-radius: 10px; padding: 12px 14px; }
@@ -409,11 +410,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .admin-modal-field input:focus { border-color: var(--brand); }
 .admin-modal-submit {
   width: 100%; padding: 12px 16px; border-radius: 10px; border: none;
-  background: var(--brand); color: #08283e; font-family: var(--font-display);
+  background: var(--brand-dark); color: #fff; font-family: var(--font-display);
   font-size: 14px; font-weight: 600; cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.admin-modal-submit:hover { background: var(--brand-dark); }
+.admin-modal-submit:hover { background: var(--brand-hover); }
 .admin-modal-submit:disabled { opacity: 0.6; cursor: default; }
 .admin-modal-error {
   font-size: 13px; color: #dc2626; margin-bottom: 12px;
@@ -569,7 +570,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-home { gap: 0; position: relative; max-width: none; padding: 0 0 80px; overflow: hidden; }
 .mm-hero--horizon { position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-height: clamp(560px, calc(100svh - 60px), 780px);
   border-radius: 0; margin-top: 0; color: #202a30;
-  background-color: #e7f2f6;
+  background-color: #fff;
   border: none; }
 .mm-hero--horizon::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; }
 .mm-hero--horizon::before {
@@ -896,9 +897,9 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   border: none; font-size: 16px; font-weight: 600; padding: 16px 24px; border-radius: 8px; }
 /* Primary action uses the site accent; the donation service keeps its own brand color. */
 .mm-hero--horizon .mm-actions .mm-cta {
-  background: #0e92eb; color: #08283e; border: none; }
+  background: var(--brand-dark); color: #fff; border: none; }
 .mm-hero--horizon .mm-actions .mm-cta:hover {
-  background: #075f9b; color: #fff; }
+  background: var(--brand-hover); color: #fff; }
 /* Donate takes the old ghost's slot, so it matches the hero button sizing. */
 .mm-actions .btn.bmc { font-size: 16px; padding: 16px 24px; border-radius: 8px; }
 .mm-pillars { margin-top: 48px; }
@@ -1038,7 +1039,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   padding: 32px; border-radius: 12px; }
 .portfolio-strip.mm-cta h3 { color: var(--text); font-size: 24px; }
 .portfolio-strip.mm-cta p { color: var(--text-light); }
-.contact-strip.mm-contact { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.contact-strip.mm-contact { background: #eaf5fd; border: 1px solid #d4e9f8; border-radius: 12px; }
 @media (max-width: 860px) {
   .mm-featured { grid-template-columns: 1fr; gap: 20px; }
   .mm-featured-copy { max-width: 560px; }
