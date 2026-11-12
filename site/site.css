@@ -2,16 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --brand: #0e92eb;
-  --brand-dark: #075f9b;
-  --brand-hover: #064a78;
-  --brand-tint: #8dc9f4;
-  --brand-50: rgba(14, 146, 235, 0.08);
-  --brand-100: rgba(14, 146, 235, 0.14);
-  --accent: #0e92eb;
-  --accent-strong: #075f9b;
-  --accent-soft: rgba(14, 146, 235, 0.12);
-  --accent-on-dark: #c4e3fb;
+  --brand: #344271;
+  --brand-dark: #344271;
+  --brand-hover: #344271;
+  --brand-tint: #c4cce9;
+  --brand-50: rgba(52, 66, 113, 0.08);
+  --brand-100: rgba(52, 66, 113, 0.14);
+  --accent: #344271;
+  --accent-strong: #344271;
+  --accent-soft: rgba(52, 66, 113, 0.12);
+  --accent-on-dark: #c4cce9;
   --bg: #f4f6f7;
   --surface: #ffffff;
   --text: #202a30;
@@ -792,7 +792,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 24px; }
 .mm-idea { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .mm-idea-mark { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px;
-  color: #075f9b; background: #fff; border: 1px solid rgba(7, 95, 155, 0.18);
+  color: #344271; background: #fff; border: 1px solid rgba(52, 66, 113, 0.18);
   border-radius: 12px; transition: transform 0.16s ease; }
 .mm-idea-mark svg { width: 24px; height: 24px; display: block; }
 .mm-idea-mark--quality { transform: rotate(-8deg); }
@@ -863,7 +863,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 }
 .mm-hero--horizon h1 { color: #202a30; font-size: clamp(40px, 7vw, 72px);
   line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 24px; text-wrap: balance; font-weight: 600; }
-.mm-hero--horizon h1 span { color: #075f9b; }
+.mm-hero--horizon h1 span { color: #344271; }
 .mm-hero--horizon .mm-lede { color: #46565e; font-size: 18px; line-height: 1.6;
   max-width: 33rem; margin: 0 0 24px; }
 @media (max-width: 640px) {
@@ -1115,17 +1115,17 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-err-head { margin: 0 0 10px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 18px; }
 .mm-err-code { font-family: var(--font-display); font-size: clamp(72px, 10vw, 108px);
   font-weight: 600; letter-spacing: -0.04em; line-height: 1; color: #202a30; }
-.mm-err-code span { color: #075f9b; }
+.mm-err-code span { color: #344271; }
 /* Beats .mm-hero--horizon h1 (0,1,1): keeps "Page not found" a subtitle. */
 .mm-hero--lost h1.mm-err-title { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 3vw, 30px);
   font-weight: 500; letter-spacing: 0; line-height: 1.25; color: #58666e; text-wrap: balance; }
 .mm-hero--lost .err-path { background: rgba(255, 255, 255, 0.76);
   border-color: rgba(32, 90, 115, 0.18); }
-.mm-hero--lost .err-path-label { color: #075f9b; }
+.mm-hero--lost .err-path-label { color: #344271; }
 .mm-hero--lost .err-path code { color: #202a30; }
 .mm-hero--lost .btn.secondary { background: #fff; color: #202a30;
   border: 1px solid rgba(32, 90, 115, 0.2); }
-.mm-hero--lost .btn.secondary:hover { border-color: #075f9b; color: #075f9b; }
+.mm-hero--lost .btn.secondary:hover { border-color: #344271; color: #344271; }
 /* Link panel matches the card above, two links per row. */
 .err.err--below { display: block; max-width: none; padding: 36px 0 8px; }
 .err.err--below .err-panel { max-width: none; padding-bottom: 24px; }

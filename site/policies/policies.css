@@ -247,6 +247,7 @@
   color: var(--brand); background: var(--brand-50);
   border: 1px solid var(--border);
 }
+.prod-redesign .feat-card.prod-card--blue .feat-icon { color: #344271; }
 .prod-redesign .feat-card h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text); }
 .prod-redesign .feat-card p { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
 
