@@ -3,7 +3,32 @@ function setToggleState(ddl, open) {
   ddl.classList.toggle('is-open', open);
   var toggle = ddl.querySelector('.drop-toggle');
   if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) positionMenu(ddl);
   return open;
+}
+
+// Flip a nav dropdown upward when it would run off the bottom edge of the
+// viewport (mirrors the app's CustomSelect flip-up behaviour).
+function positionMenu(ddl) {
+  var menu = ddl.querySelector('.drop-menu');
+  if (!menu) return;
+  menu.classList.remove('flip-up');
+  menu.style.top = ''; menu.style.bottom = ''; menu.style.margin = '';
+  // Force layout so getBoundingClientRect reflects the open state.
+  menu.offsetHeight;
+  var toggle = ddl.querySelector('.drop-toggle');
+  var trect = toggle ? toggle.getBoundingClientRect() : null;
+  var viewport = window.innerHeight || document.documentElement.clientHeight;
+  var spaceBelow = viewport - (trect ? trect.bottom : menu.getBoundingClientRect().top) - 8;
+  var menuHeight = menu.getBoundingClientRect().height;
+  if (spaceBelow < menuHeight) {
+    menu.classList.add('flip-up');
+    menu.style.bottom = '100%';
+    menu.style.margin = '0 0 8px 0';
+  } else {
+    menu.style.top = '100%';
+    menu.style.margin = '8px 0 0 0';
+  }
 }
 // bindToggleList(rootSel): mouse hover opens, tap toggles; outside-click /
 // Escape / pageshow close. Second tap on an open toggle follows its link.

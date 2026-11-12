@@ -107,8 +107,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   border-radius: 10px; box-shadow: var(--shadow-md);
 }
 .nav-drop.is-open .drop-menu { display: block; animation: drop-in 0.14s ease; }
+.nav-drop .drop-menu.flip-up { animation: drop-up 0.14s ease; }
 .nav-drop.is-open .caret { transform: rotate(180deg); }
 @keyframes drop-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes drop-up { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 /* invisible bridge so moving the cursor down doesn't close the menu */
 .nav-drop .drop-menu::before { content: ''; position: absolute; top: -12px; left: 0; right: 0; height: 12px; }
 /* keep the right-most menu inside the viewport */
