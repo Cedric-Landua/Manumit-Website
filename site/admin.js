@@ -32,7 +32,7 @@
           '<label for="admin-input-pass">Password</label>' +
           '<input type="password" id="admin-input-pass" autocomplete="current-password" />' +
         '</div>' +
-        '<button type="button" class="help-form-submit admin-modal-submit" id="admin-login-submit">Sign In</button>' +
+        '<button type="button" class="admin-modal-submit" id="admin-login-submit">Sign In</button>' +
       '</div>';
     document.body.appendChild(overlay);
     // Inline styles (not just .is-open) so a stale cached site.css can't leak
