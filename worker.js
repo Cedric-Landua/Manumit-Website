@@ -161,7 +161,7 @@ const ROLLING_TASK_WHERE = `
       type = 'task'
       AND done = 0
       AND recurrence_id IS NULL
-      AND item_date < date('now', 'localtime')
+      AND item_date < date('now')
       AND (
         due_date IS NULL
         OR item_date < due_date
@@ -191,7 +191,7 @@ async function runDailySweep(env) {
       FROM split_task_items i
       JOIN split_task_settings s ON s.user_id = i.user_id
       WHERE s.delete_after_days > 0
-        AND i.item_date < date('now', 'localtime', '-' || s.delete_after_days || ' days')
+        AND i.item_date < date('now', '-' || s.delete_after_days || ' days')
     )
   `).run();
 
