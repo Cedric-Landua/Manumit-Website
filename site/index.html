@@ -140,16 +140,14 @@
             <g id="person-torso" fill="#4c7180" stroke="#28343a" stroke-width="4" stroke-linejoin="round">
               <path d="M453 421 Q494 407 535 421 L548 520 Q539 548 494 552 Q449 548 440 520Z" />
             </g>
-            <!-- The clipped return of the L desk leaves a chair opening at center. -->
-            <path d="M42 450 L500 450 L500 405 L958 405 L919 562 L650 562 L650 502 L350 502 L350 562 L82 562Z" fill="url(#deskGrad)" stroke="#60452f" stroke-width="4" stroke-linejoin="round" />
-            <path d="M42 450 L500 450 L500 405 L350 502 L350 562 L82 562Z" fill="#f1c188" opacity=".19" />
-            <path d="M500 405 L958 405 L919 562 L650 562 L650 502Z" fill="#815735" opacity=".12" />
-            <!-- A square step at the back and a square chair cutout make the right-angle layout explicit. -->
-            <path d="M42 450 L500 450 L500 405 L958 405" stroke="#654a33" stroke-width="6" fill="none" />
-            <path d="M500 407 L350 502 L350 562 M500 407 L650 502 L650 562" stroke="#9a6c43" stroke-width="3" fill="none" opacity=".72" />
-            <path d="M84 562 L350 562 M650 562 L919 562 M105 490 Q245 474 330 478 M670 435 Q800 438 910 468 M90 533 Q230 515 330 520 M670 520 Q800 515 905 533" stroke="#8a6040" stroke-width="2" fill="none" opacity=".58" />
-            <path d="M106 562 L128 700 M903 562 L883 700" stroke="#57402e" stroke-width="10" />
-            <path d="M352 544 L396 665 M648 544 L610 665" stroke="#65452e" stroke-width="7" opacity=".85" />
+            <!-- Main desktop and perpendicular right-hand return, with a square inside corner. -->
+            <path d="M42 418 L860 418 L860 465 L920 650 L760 650 L760 510 L82 510Z" fill="url(#deskGrad)" stroke="#60452f" stroke-width="4" stroke-linejoin="round" />
+            <path d="M42 418 L860 418 L760 510 L82 510Z" fill="#f1c188" opacity=".19" />
+            <path d="M860 465 L920 650 L760 650 L760 510Z" fill="#815735" opacity=".18" />
+            <path d="M42 418 L860 418 L860 465 M82 510 L760 510 L760 650 L920 650" stroke="#654a33" stroke-width="6" fill="none" />
+            <path d="M98 468 Q280 440 490 448 M535 448 Q690 442 815 458 M92 493 Q280 470 455 477 M780 500 L812 607 M830 492 L862 617" stroke="#8a6040" stroke-width="2" fill="none" opacity=".58" />
+            <path d="M106 510 L128 700 M903 650 L883 700 M790 650 L792 700" stroke="#57402e" stroke-width="10" />
+            <path d="M352 510 L396 665 M648 510 L610 665" stroke="#65452e" stroke-width="7" opacity=".85" />
             <g id="person-head" stroke="#28343a" stroke-width="3">
               <path d="M469 408 Q466 383 484 373 Q510 370 522 389 L520 424 L503 439 L476 429Z" fill="#c98e69" />
               <path d="M468 404 Q463 379 486 367 Q511 367 523 387 L516 394 Q497 380 477 397Z" fill="#334453" stroke="none" />
@@ -164,11 +162,11 @@
               <path d="M394 467 L391 502 M425 467 L422 502 M456 467 L453 503 M487 467 L484 503 M518 467 L515 503 M549 467 L546 503 M580 467 L577 503 M611 467 L608 503" stroke="#4d575a" stroke-width="1.5" />
               <rect x="474" y="489" width="82" height="8" rx="2" fill="#344271" opacity=".65" />
             </g>
-            <g id="mouse">
+            <g id="mouse" transform="translate(0 -10)">
               <path d="M695 464 Q712 458 724 474 Q736 491 725 506 Q715 517 699 510 Q685 500 690 482Z" fill="#272d30" stroke="#161a1b" stroke-width="3" />
               <path d="M706 463 L707 479" stroke="#798184" stroke-width="2" />
             </g>
-            <g id="lego-car">
+            <g id="lego-car" transform="translate(0 -52)">
               <path d="M142 526 L157 505 L193 505 L216 523 L231 528 L230 545 L127 545 L124 536Z" fill="#f2a900" stroke="#684918" stroke-width="3" stroke-linejoin="round" />
               <path d="M161 508 L189 508 L205 523 L150 523Z" fill="#d9eff0" stroke="#684918" stroke-width="2" />
               <path d="M137 528 L150 526 M213 526 L225 531" stroke="#fff0a8" stroke-width="4" />
@@ -183,7 +181,7 @@
               <rect x="222" y="532" width="10" height="6" rx="2" fill="#f7e6a4" stroke="#684918" stroke-width="1" />
               <text x="180" y="541" font-family="monospace" font-size="7" fill="#6b4915" text-anchor="middle">3</text>
             </g>
-            <g id="mit-text">
+            <g id="mit-text" transform="translate(0 -43)">
               <path d="M251 514 L359 505 L363 543 L255 552Z" fill="#ad9067" stroke="#876844" stroke-width="2" transform="translate(3 4)" />
               <path d="M247 510 L355 501 L359 539 L251 548Z" fill="#dec7a0" stroke="#876844" stroke-width="2" />
               <text x="260" y="529" font-family="serif" font-size="15" fill="#80674b" font-weight="bold" transform="rotate(-5 260 529)">MIT</text>
