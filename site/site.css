@@ -149,7 +149,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 .goal-card { padding: 24px; margin-left: 24px; border-left: 1px solid var(--border); }
 .goal-card:first-child { margin-left: 0; border-left: none; padding-left: 0; }
-.goal-card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0; color: var(--brand); }
+.goal-card h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0; color: #344271; }
 .goal-card p { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.7; }
 
 /* Tech stack tiles: each brand's own colour; logos inlined as SVG (no third-party fetch). */
@@ -188,16 +188,16 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 
 /* Portfolio call to action. */
 .portfolio-strip { margin: 24px auto 0; max-width: 980px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.portfolio-strip h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text); }
-.portfolio-strip p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-light); max-width: 54ch; }
+.portfolio-strip h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 20px; font-weight: 600; color: #344271; }
+.portfolio-strip p { margin: 0; font-size: 15px; line-height: 1.6; color: #58666e; max-width: 54ch; }
 .portfolio-strip .actions { display: flex; flex-shrink: 0; }
-.portfolio-strip .btn.primary { background: var(--brand-dark); color: #fff; }
-.portfolio-strip .btn.primary:hover { background: var(--brand-hover); color: #fff; }
+.portfolio-strip .btn.primary { background: #d9a521; color: #241a02; }
+.portfolio-strip .btn.primary:hover { background: #ffe94d; color: #000; }
 
 .contact-strip { text-align: left; margin: 64px auto 0; max-width: 980px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; display: flex; flex-direction: column; gap: 16px; }
 .contact-strip .contact-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
-.contact-strip h2 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 600; }
-.contact-strip p { margin: 0; color: var(--text-light); font-size: 15px; }
+.contact-strip h2 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 600; color: #344271; }
+.contact-strip p { margin: 0; color: #58666e; font-size: 15px; }
 .contact-strip .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
 /* 404 route-miss report (hero geometry + goal list). */
