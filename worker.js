@@ -462,6 +462,158 @@ async function sendTicketConfirmation(env, email, ticketId, type, message) {
   }
 }
 
+/**
+ * Resolve a target username to a stable D1 user_id.
+ * Uses the payload username, falling back to DEFAULT_TARGET_USERNAME.
+ */
+async function resolveTargetUserFromDb(db, username) {
+  const u = normUsername(username);
+  if (!u) return null;
+  return findUser(db, u);
+}
+/**
+ * Verify the MCP API key from Authorization: Bearer <key> or ?key=<key>.
+ */
+async function verifyMcpAuth(request, env) {
+  const expected = env.MCP_API_KEY;
+  if (!expected || typeof expected !== "string") return false;
+  const auth = request.headers.get("authorization") || "";
+  let provided = "";
+  if (auth.startsWith("Bearer ") || auth.startsWith("bearer ")) {
+    provided = auth.slice(7).trim();
+  } else {
+    try {
+      provided = new URL(request.url).searchParams.get("key") || "";
+    } catch { provided = ""; }
+  }
+  if (!provided) return false;
+  return timingSafeEqual(provided, expected);
+}
+/**
+ * Create a split_task_items row from an external agent / MCP payload.
+ * Matches the exact split_task_items schema and bumps the per-user sync
+ * version so connected clients pull the new item on their next sync.
+ *
+ * Dedupes on (title) or (URL embedded in notes) for the target user so
+ * daily scans never create duplicate items.
+ *
+ * @returns {inserted:boolean, id:string, reason:string}
+ */
+async function createTaskFromAgent(env, payload) {
+  const db = env["ST-DATABASE"];
+  if (!db) throw new Error("D1 binding ST-DATABASE is not configured");
+
+  const title = String(payload.title || "").trim();
+  const date = String(payload.date || "").trim();
+  const url = String(payload.url || "").trim();
+  const notes = String(payload.notes || "").trim();
+  const username =
+    String(payload.username || "").trim() ||
+    String(env.DEFAULT_TARGET_USERNAME || "").trim();
+
+  if (!title) throw new Error("title is required");
+  const account = await resolveTargetUserFromDb(db, username);
+  if (!account) throw new Error(`Unknown target user: ${username || "(none)"}`);
+  const userId = account.user_id;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const itemDate = date || today;
+  const id = crypto.randomUUID();
+  const nowIso = new Date().toISOString();
+
+  // --- Deduplication: same title OR same URL already present for this user ---
+  const conditions = ["title = ?"];
+  const params = [userId, title];
+  if (url) {
+    conditions.push("notes LIKE ?");
+    params.push(`%Source: ${url}%`);
+  }
+  const existing = await db
+    .prepare(
+      `SELECT id FROM split_task_items WHERE user_id = ? AND (${
+        conditions.join(" OR ")
+      }) LIMIT 1`
+    )
+    .bind(...params)
+    .first();
+  if (existing) {
+    return { inserted: false, id: existing.id, reason: "duplicate" };
+  }
+
+  const urlLine = url ? `\nSource: ${url}` : "";
+  const notesText = [notes, urlLine]
+    .filter(Boolean)
+    .join("\n")
+    .trim() || null;
+
+  await db
+    .prepare(
+      `INSERT INTO split_task_items (
+        id, user_id, type, title, category_id, item_date, due_date,
+        done, notes, updated_at
+      ) VALUES (?, ?, 'task', ?, 'default', ?, ?, 0, ?, ?)`
+    )
+    .bind(id, userId, title, itemDate, itemDate, notesText, nowIso)
+    .run();
+
+  // Bump the sync version so connected clients re-pull on next sync.
+  try {
+    await db
+      .prepare(
+        `INSERT INTO split_task_sync_versions (user_id, version)
+         VALUES (?, 1)
+         ON CONFLICT(user_id) DO UPDATE SET version = version + 1`
+      )
+      .bind(userId)
+      .run();
+  } catch (e) {
+    console.warn("[agent/ingest] sync version bump skipped:", e?.message || e);
+  }
+
+  return { inserted: true, id };
+}
+/**
+ * POST /api/agent/ingest handler. Accepts a single item object or an array
+ * of { title, date, url, notes, username } and ingests each through
+ * createTaskFromAgent.
+ */
+async function handleAgentIngest(request, env, jsonResponse) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: "Invalid JSON body" }, 400);
+  }
+  const items = Array.isArray(body) ? body : [body];
+  if (!items.length || items.some((it) => !it || typeof it !== "object")) {
+    return jsonResponse(
+      { error: "Expected an item object or array of items" },
+      400
+    );
+  }
+
+  const results = [];
+  const errors = [];
+  for (const item of items) {
+    try {
+      results.push(await createTaskFromAgent(env, item));
+    } catch (e) {
+      errors.push({ item, error: String(e?.message || e) });
+    }
+  }
+
+  const allFailed = errors.length === items.length;
+  return jsonResponse(
+    {
+      success: !allFailed,
+      inserted: results.filter((r) => r.inserted).length,
+      duplicates: results.filter((r) => !r.inserted).length,
+      results,
+      errors: errors.length ? errors : undefined,
+    },
+    allFailed ? 400 : 200
+  );
+}
 export default {
   async fetch(request, env, ctx) {
     // Allowlisted CORS: sync clients are manumit.studio (+ app origins);
@@ -515,6 +667,98 @@ export default {
           'Cache-Control': 'no-store',
         },
       });
+
+    // ─── MCP server (/mcp) ───────────────────────────────────────────────
+    // Zero-dependency Streamable-HTTP MCP server (JSON-RPC 2.0).
+    // Works directly in Cloudflare Dashboard Quick Edit without npm bundling.
+    if (url.pathname === "/mcp" || url.pathname.startsWith("/mcp/")) {
+      if (!(await verifyMcpAuth(request, env))) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+      if (request.method === "GET") {
+        return new Response(null, { status: 405, headers: corsHeaders });
+      }
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "Method not allowed" }, 405);
+      }
+
+      let rpc;
+      try {
+        rpc = await request.json();
+      } catch {
+        return jsonResponse({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
+      }
+
+      // Notifications (no id) get 202 Accepted with empty body per MCP spec
+      if (rpc.id === undefined || rpc.id === null) {
+        return new Response(null, { status: 202, headers: corsHeaders });
+      }
+
+      const rpcOk = (result) => jsonResponse({ jsonrpc: "2.0", id: rpc.id, result });
+      const rpcErr = (code, message) => jsonResponse({ jsonrpc: "2.0", id: rpc.id, error: { code, message } });
+
+      if (rpc.method === "initialize") {
+        return rpcOk({
+          protocolVersion: rpc.params?.protocolVersion || "2025-03-26",
+          capabilities: { tools: {} },
+          serverInfo: { name: "manumit-mcp", version: "1.0.0" },
+        });
+      }
+
+      if (rpc.method === "ping") {
+        return rpcOk({});
+      }
+
+      if (rpc.method === "tools/list") {
+        return rpcOk({
+          tools: [
+            {
+              name: "add_upcoming_opportunity",
+              description: "Add an upcoming opportunity, hackathon, or application deadline to Split Task.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Title of the hackathon, program, or opportunity" },
+                  date: { type: "string", description: "Target or deadline date in YYYY-MM-DD format" },
+                  url: { type: "string", description: "Link to the opportunity" },
+                  notes: { type: "string", description: "Details, eligibility, or description" },
+                  username: { type: "string", description: "Optional target username (defaults to DEFAULT_TARGET_USERNAME)" },
+                },
+                required: ["title"],
+              },
+            },
+          ],
+        });
+      }
+
+      if (rpc.method === "tools/call") {
+        if (rpc.params?.name !== "add_upcoming_opportunity") {
+          return rpcErr(-32601, `Unknown tool: ${rpc.params?.name}`);
+        }
+        try {
+          const result = await createTaskFromAgent(env, rpc.params?.arguments || {});
+          return rpcOk({
+            content: [{ type: "text", text: JSON.stringify(result) }],
+          });
+        } catch (err) {
+          return rpcOk({
+            isError: true,
+            content: [{ type: "text", text: String(err?.message || err) }],
+          });
+        }
+      }
+
+      return rpcErr(-32601, `Method not found: ${rpc.method}`);
+    }
+
+    // ─── Agent ingestion REST endpoint (/api/agent/ingest) ───────────────
+    // Direct REST ingest for agents that don't speak MCP. Same MCP_API_KEY
+    // guard. Accepts a single item object or an array.
+    if (url.pathname === "/api/agent/ingest" && request.method === "POST") {
+      if (!(await verifyMcpAuth(request, env)))
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      return handleAgentIngest(request, env, jsonResponse);
+    }
 
     // ─── GET /api/status ─────────────────────────────────────────────────
     // Self-check uptime: ticks an hourly heartbeat bucket (this request is
