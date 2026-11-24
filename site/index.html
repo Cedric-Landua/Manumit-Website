@@ -105,10 +105,10 @@
             <rect x="0" y="0" width="1000" height="430" fill="#f1eee8" />
             <path d="M0 390 Q490 365 1000 405 L1000 700 L0 700Z" fill="#f1eee8" />
             <g class="monitor-frame" id="monitor-left-frame">
-              <rect x="125" y="148" width="158" height="208" rx="5" fill="#24292d" stroke="#171a1c" stroke-width="7" />
-              <rect x="136" y="159" width="136" height="186" fill="#f8faf8" stroke="#aab5b4" stroke-width="2" />
-              <path d="M190 356 L190 397 L158 407 L251 407 L219 397 L219 356Z" fill="#42494a" stroke="#24292d" stroke-width="3" />
-              <path d="M158 407 L251 407" stroke="#24292d" stroke-width="4" />
+              <path d="M132 148 L282 163 L282 354 L146 345Z" fill="#24292d" stroke="#171a1c" stroke-width="7" stroke-linejoin="round" />
+              <path d="M143 160 L271 173 L271 343 L156 334Z" fill="#f8faf8" stroke="#aab5b4" stroke-width="2" />
+              <path d="M190 344 L199 390 L166 400 L252 409 L222 395 L211 347Z" fill="#42494a" stroke="#24292d" stroke-width="3" stroke-linejoin="round" />
+              <path d="M166 400 L252 409" stroke="#24292d" stroke-width="4" />
             </g>
             <g class="monitor-frame" id="monitor-center-frame">
               <rect x="307" y="118" width="372" height="238" rx="6" fill="#24292d" stroke="#171a1c" stroke-width="8" />
@@ -117,10 +117,10 @@
               <path d="M432 407 L562 407" stroke="#24292d" stroke-width="4" />
             </g>
             <g class="monitor-frame" id="monitor-right-frame">
-              <rect x="700" y="148" width="158" height="208" rx="5" fill="#24292d" stroke="#171a1c" stroke-width="7" />
-              <rect x="711" y="159" width="136" height="186" fill="#f8faf8" stroke="#aab5b4" stroke-width="2" />
-              <path d="M764 356 L764 397 L732 407 L825 407 L793 397 L793 356Z" fill="#42494a" stroke="#24292d" stroke-width="3" />
-              <path d="M732 407 L825 407" stroke="#24292d" stroke-width="4" />
+              <path d="M718 163 L868 148 L854 345 L718 354Z" fill="#24292d" stroke="#171a1c" stroke-width="7" stroke-linejoin="round" />
+              <path d="M729 173 L857 160 L844 334 L729 343Z" fill="#f8faf8" stroke="#aab5b4" stroke-width="2" />
+              <path d="M803 347 L792 395 L762 409 L848 400 L815 390 L824 344Z" fill="#42494a" stroke="#24292d" stroke-width="3" stroke-linejoin="round" />
+              <path d="M762 409 L848 400" stroke="#24292d" stroke-width="4" />
             </g>
             <g id="pc-tower">
               <rect x="879" y="300" width="100" height="218" rx="7" fill="#282c2e" stroke="#141719" stroke-width="5" />
@@ -141,12 +141,12 @@
               <path d="M453 421 Q494 407 535 421 L548 520 Q539 548 494 552 Q449 548 440 520Z" />
             </g>
             <!-- The clipped return of the L desk leaves a chair opening at center. -->
-            <path d="M42 418 L958 418 L919 582 L665 548 L614 514 L385 514 L335 548 L82 582Z" fill="url(#deskGrad)" stroke="#60452f" stroke-width="4" stroke-linejoin="round" />
+            <path d="M42 418 L958 418 L919 562 L665 538 L614 502 L385 502 L335 538 L82 562Z" fill="url(#deskGrad)" stroke="#60452f" stroke-width="4" stroke-linejoin="round" />
             <path d="M42 418 L958 418" stroke="#654a33" stroke-width="6" />
-            <path d="M500 420 L385 514 M500 420 L614 514" stroke="#9a6c43" stroke-width="3" fill="none" opacity=".72" />
-            <path d="M84 582 L335 548 M665 548 L919 582 M105 475 Q260 450 390 463 M610 463 Q770 450 910 475 M90 530 Q230 505 330 520 M670 520 Q800 505 905 530" stroke="#8a6040" stroke-width="2" fill="none" opacity=".58" />
-            <path d="M106 582 L128 700 M903 582 L883 700" stroke="#57402e" stroke-width="10" />
-            <path d="M352 554 L396 665 M648 554 L610 665" stroke="#65452e" stroke-width="7" opacity=".85" />
+            <path d="M500 420 L385 502 L335 538 M500 420 L614 502 L665 538" stroke="#9a6c43" stroke-width="3" fill="none" opacity=".72" />
+            <path d="M84 562 L335 538 M665 538 L919 562 M105 468 Q260 446 390 456 M610 456 Q770 446 910 468 M90 522 Q230 501 330 512 M670 512 Q800 501 905 522" stroke="#8a6040" stroke-width="2" fill="none" opacity=".58" />
+            <path d="M106 562 L128 700 M903 562 L883 700" stroke="#57402e" stroke-width="10" />
+            <path d="M352 544 L396 665 M648 544 L610 665" stroke="#65452e" stroke-width="7" opacity=".85" />
             <g id="person-head" stroke="#28343a" stroke-width="3">
               <path d="M469 408 Q466 383 484 373 Q510 370 522 389 L520 424 L503 439 L476 429Z" fill="#c98e69" />
               <path d="M468 404 Q463 379 486 367 Q511 367 523 387 L516 394 Q497 380 477 397Z" fill="#334453" stroke="none" />
@@ -192,7 +192,7 @@
           <p class="desk-prompt">Choose a screen to explore</p>
 
           <!-- Monitor overlays (clickable, positioned over SVG screens) -->
-          <button class="monitor-overlay monitor-privacy" type="button" data-monitor="privacy" aria-label="Open Privacy details" aria-expanded="false" style="left: 13.5%; top: 21.5%; width: 13.5%; height: 28%;">
+          <button class="monitor-overlay monitor-privacy" type="button" data-monitor="privacy" aria-label="Open Privacy details" aria-expanded="false" style="left: 13.2%; top: 21.3%; width: 15%; height: 28.5%;">
             <div class="monitor-label">Privacy</div>
             <div class="monitor-lines" id="lines-privacy">
               <div class="line line-1"></div>
@@ -229,7 +229,7 @@
             </div>
           </button>
 
-          <button class="monitor-overlay monitor-free" type="button" data-monitor="free" aria-label="Open Free details" aria-expanded="false" style="left: 71%; top: 21.5%; width: 13.5%; height: 28%;">
+          <button class="monitor-overlay monitor-free" type="button" data-monitor="free" aria-label="Open Free details" aria-expanded="false" style="left: 71.2%; top: 21.3%; width: 15%; height: 28.5%;">
             <div class="monitor-label">Free</div>
             <div class="monitor-lines" id="lines-free">
               <div class="line line-1"></div>
