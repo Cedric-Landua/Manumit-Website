@@ -46,8 +46,8 @@
 .policy-card .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .policy-card h2 { margin: 0; font-size: 20px; font-weight: 600; color: var(--text); }
 .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; flex-shrink: 0; }
-.badge.ready { background: rgba(22, 163, 74, 0.14); color: #15803d; }
-.badge.draft { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.badge.ready { background: rgba(14, 47, 118, 0.14); color: #0e2f76; }
+.badge.draft { background: rgba(14, 47, 118, 0.14); color: #0e2f76; }
 .policy-card .summary { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
 .policy-card .key-points { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--text); }
 .policy-card .card-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--brand-dark); }
@@ -72,7 +72,7 @@
 /* EULA draft placeholder */
 .draft-banner {
   display: flex; gap: 10px; align-items: center;
-  background: #fff7ed; border: 1px solid #fcd8a4; color: #7c4a05;
+  background: var(--brand-50); border: 1px solid var(--border); color: var(--text);
   border-radius: 8px; padding: 12px 16px; font-size: 14px; font-weight: 500;
 }
 .draft-banner svg { flex-shrink: 0; }

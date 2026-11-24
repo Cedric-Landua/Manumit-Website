@@ -2,23 +2,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --brand: #344271;
-  --brand-dark: #344271;
-  --brand-hover: #344271;
-  --brand-tint: #c4cce9;
-  --brand-50: rgba(52, 66, 113, 0.08);
-  --brand-100: rgba(52, 66, 113, 0.14);
-  --accent: #344271;
-  --accent-strong: #344271;
-  --accent-soft: rgba(52, 66, 113, 0.12);
-  --accent-on-dark: #c4cce9;
-  --bg: #f4f6f7;
+  --brand: #0e2f76;
+  --brand-dark: #0e2f76;
+  --brand-hover: #0e2f76;
+  --brand-tint: #aac0e1;
+  --brand-50: rgba(14, 47, 118, 0.08);
+  --brand-100: rgba(14, 47, 118, 0.14);
+  --accent: #0e2f76;
+  --accent-strong: #0e2f76;
+  --accent-soft: rgba(14, 47, 118, 0.12);
+  --accent-on-dark: #aac0e1;
+  --bg: #f5feff;
   --surface: #ffffff;
-  --text: #202a30;
+  --text: #0e2f76;
   --text-light: #58666e;
-  --border: #e0e5e7;
-  --shadow-sm: 0 1px 2px rgba(23, 39, 48, 0.06);
-  --shadow-md: 0 12px 24px -16px rgba(23, 39, 48, 0.2);
+  --border: #aac0e1;
+  --shadow-sm: 0 1px 2px rgba(14, 47, 118, 0.06);
+  --shadow-md: 0 12px 24px -16px rgba(14, 47, 118, 0.2);
   --radius: 12px;
   --space-1: 4px;
   --space-2: 8px;
@@ -30,7 +30,7 @@
   --space-16: 64px;
   --container: 1120px;
   --font-display: 'Manrope', 'Inter', system-ui, sans-serif;
-  --header-bg: #f4f6f7;
+  --header-bg: #f5feff;
   --footer-bg: var(--surface);
   color-scheme: light;
 }
@@ -56,7 +56,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .site-header nav { margin-left: auto; display: flex; align-items: center; gap: 2px; }
 .site-header nav > a, .nav-drop .drop-toggle { padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--text-light); white-space: nowrap; transition: color 0.15s ease, background-color 0.15s ease; }
 .site-header nav > a:hover, .nav-drop .drop-toggle:hover { color: var(--brand-dark); background: var(--brand-50); }
-.site-header nav > a.active, .nav-drop .drop-toggle.active { color: var(--brand-dark); font-weight: 600; background: transparent; box-shadow: inset 0 -2px 0 var(--brand); }
+.site-header nav > a.active, .nav-drop .drop-toggle.active { color: var(--brand-dark); font-weight: 600; background: var(--brand-tint); box-shadow: inset 0 -2px 0 var(--brand); }
 .site-header .brand:focus-visible,
 .site-header nav a:focus-visible { outline-color: var(--brand); }
 
@@ -80,8 +80,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
 .btn.secondary:hover { border-color: var(--brand); color: var(--brand-dark); }
 /* Buy Me a Coffee keeps its own yellow/black brand pair so the cup stays recognisable. */
-.btn.bmc { background: #ffdd00; color: #0d0c22; position: relative; }
-.btn.bmc:hover { background: #ffe94d; }
+.btn.bmc { background: var(--brand-dark); color: #fff; position: relative; }
+.btn.bmc:hover { background: var(--brand-hover); color: #fff; }
 .btn.bmc .bmc-logo { width: 18px; height: 18px; flex-shrink: 0; fill: currentColor; }
 .btn.bmc .bmc-sparkle { position: absolute; top: -12px; right: -9px; width: 18px; height: 18px; color: #f0ad24; opacity: 0; transform: scale(.35) rotate(-35deg); pointer-events: none; }
 .btn.bmc .bmc-sparkle svg { width: 100%; height: 100%; fill: currentColor; }
@@ -129,7 +129,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 /* Support link sits directly under "Read my policies". */
 .hero .actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
 .hero-panel {
-  background: #eaf5fd; color: var(--text); border: 1px solid #d4e9f8; border-radius: 12px; padding: 24px;
+  background: var(--brand-50); color: var(--text); border: 1px solid var(--brand-tint); border-radius: 12px; padding: 24px;
 }
 .hero-panel-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-light); margin-bottom: 16px; }
 .hero-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
@@ -320,9 +320,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .help-form .help-form-submit:hover { background: var(--brand-hover); }
 .help-form .help-form-submit:disabled { opacity: 0.6; cursor: default; }
 .help-form .required-star { color: #dc2626; font-weight: 600; }
-.help-form-message { font-size: 14px; line-height: 1.55; border-radius: 10px; padding: 12px 14px; }
-.help-form-message.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-.help-form-message.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.help-form-message { font-size: 14px; line-height: 1.55; border-radius: 10px; padding: 12px 14px; background: var(--brand-50); color: var(--text); }
+.help-form-message.error { background: rgba(220, 38, 38, 0.1); color: var(--text); border: 1px solid rgba(220, 38, 38, 0.2); }
+.help-form-message.success { background: rgba(22, 163, 74, 0.1); color: var(--text); border: 1px solid rgba(22, 163, 74, 0.2); }
 
 @media (max-width: 480px) {
   .help-fab { bottom: 16px; right: 16px; padding: 12px 17px; }
@@ -571,12 +571,12 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 /* Manumit homepage — homepage-only .mm-* classes. */
 .mm-home { gap: 0; position: relative; max-width: none; padding: 0 0 80px; overflow: hidden; }
 .mm-hero--horizon { position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-height: clamp(560px, calc(100svh - 60px), 780px);
-  border-radius: 0; margin-top: 0; color: #202a30;
-  background-color: #fff;
+  border-radius: 0; margin-top: 0; color: var(--text);
+  background-color: var(--surface);
   border: none; }
 .mm-hero--horizon::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; }
 .mm-hero--horizon::before {
-  background: repeating-linear-gradient(135deg, transparent 0 11px, rgba(14, 146, 235, 0.07) 11px 12px, transparent 12px 24px);
+  background: repeating-linear-gradient(135deg, transparent 0 11px, var(--brand-50) 11px 12px, transparent 12px 24px);
 }
 .mm-hero--horizon::after,
 .mm-hero--horizon .mm-hero-bg { display: none; }
@@ -598,7 +598,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
    the card's bottom edge (translate 78% of its fixed 320px height); the land
    tile loops sideways to spin. */
 .mm-earth { position: absolute; left: 50%; bottom: 0; width: min(1200px, 100%); height: 320px;
-  transform: translate(-50%, 78%); filter: drop-shadow(0 -8px 26px rgba(120,170,255,0.22)); }
+  transform: translate(-50%, 78%); filter: drop-shadow(0 -8px 26px var(--brand-tint)); }
 .mm-earth-spin { animation: mm-earth-rotate 60s linear infinite; }
 @keyframes mm-earth-rotate { from { transform: translateX(0); } to { transform: translateX(-300px); } }
 /* Rocket launch: an Apollo-style flight on a 40s loop — the flight itself keeps
@@ -792,9 +792,9 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 24px; }
 .mm-idea { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .mm-idea-mark { display: grid; place-items: center; width: 56px; height: 56px; flex: 0 0 56px;
-  color: #344271; background: #fff; border: 1px solid rgba(52, 66, 113, 0.18);
+  color: #fff; background: var(--brand); border: 1px solid var(--brand-tint);
   border-radius: 12px; transition: transform 0.16s ease; }
-.mm-idea-mark svg { width: 24px; height: 24px; display: block; }
+.mm-idea-mark svg { width: 24px; height: 24px; display: block; fill: #fff; }
 .mm-idea-mark--quality { transform: rotate(-8deg); }
 .mm-idea-mark--free { transform: rotate(8deg); }
 .mm-idea { position: relative; }
@@ -820,9 +820,9 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   52% { transform: rotate(-8deg) scale(1.04); }
   76% { transform: rotate(17deg); }
 }
-.mm-idea-copy { display: grid; gap: 4px; color: #202a30; }
+.mm-idea-copy { display: grid; gap: 4px; color: var(--text); }
 .mm-idea-copy strong { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
-.mm-idea-copy > span { color: #58666e; font-size: 12px; line-height: 1.5; }
+.mm-idea-copy > span { color: var(--text-light); font-size: 12px; line-height: 1.5; }
 /* Ignition wash + rolling ground smoke, in front of the planet. */
 .mm-pad { position: absolute; left: 64%; bottom: 0; width: 150px; height: 100px;
   transform: translateX(-50%); pointer-events: none; }
@@ -861,10 +861,10 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   12% { opacity: 0.22; transform: translate(59px, -17px) scale(1.75); }
   16.8%, 100% { opacity: 0; transform: translate(77px, -22px) scale(2); }
 }
-.mm-hero--horizon h1 { color: #202a30; font-size: clamp(40px, 7vw, 72px);
+.mm-hero--horizon h1 { color: var(--text); font-size: clamp(40px, 7vw, 72px);
   line-height: 1.05; letter-spacing: -0.035em; margin: 0 0 24px; text-wrap: balance; font-weight: 600; }
-.mm-hero--horizon h1 span { color: #344271; }
-.mm-hero--horizon .mm-lede { color: #46565e; font-size: 18px; line-height: 1.6;
+.mm-hero--horizon h1 span { color: var(--brand-dark); }
+.mm-hero--horizon .mm-lede { color: var(--text-light); font-size: 18px; line-height: 1.6;
   max-width: 33rem; margin: 0 0 24px; }
 @media (max-width: 640px) {
   .mm-hero--horizon { min-height: 560px; }
@@ -895,7 +895,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
   .mm-idea.is-animating .mm-idea-mark { animation: none; }
 }
 .mm-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.mm-cta { background: #d9a521; color: #241a02;
+.mm-cta { background: var(--brand-dark); color: #fff;
   border: none; font-size: 16px; font-weight: 600; padding: 16px 24px; border-radius: 8px; }
 /* Primary action uses the site accent; the donation service keeps its own brand color. */
 .mm-hero--horizon .mm-actions .mm-cta {
@@ -1019,7 +1019,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-net-head .mm-live { display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 500;
   color: var(--text-light); }
-.mm-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #538b68; }
+.mm-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
 .mm-net-head h2 { margin: 8px 0 6px; font-size: clamp(24px, 3vw, 32px);
   letter-spacing: -0.02em; color: var(--text); font-weight: 600; }
 .mm-net-head p { margin: 0; color: var(--text-light); font-size: 14px; max-width: 44rem; }
@@ -1048,14 +1048,14 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-map { background: var(--bg); border-radius: 12px; padding: 12px; }
 .mm-map svg { width: 100%; height: auto; display: block; }
 .mm-map-bg { fill: url(#mm-ocean); stroke: rgba(255,255,255,0.2); }
-.mm-map-current path { fill: none; stroke: rgba(147, 213, 225, 0.12); stroke-width: 1.5; }
-.mm-map-beach { fill: #e9c890; stroke: #f3dbac; stroke-width: 1; }
-.mm-map-land { fill: #56896d; stroke: #78a981; stroke-width: 0.7; }
-.mm-map-island { fill: #56896d; stroke: #e9c890; stroke-width: 1.5; }
-.mm-dot { fill: rgba(206, 232, 224, 0.52); }
-.mm-dot-lit { fill: #f5f2d5; }
-.mm-link { fill: none; stroke: #b8e3dc; stroke-width: 1.5; opacity: 0.75; }
-.mm-node-ring { fill: #174e67; stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
+.mm-map-current path { fill: none; stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.25; }
+.mm-map-beach { fill: var(--brand-tint); stroke: var(--brand-tint); stroke-width: 1; opacity: 0.4; }
+.mm-map-land { fill: var(--brand); stroke: var(--brand-tint); stroke-width: 0.7; opacity: 0.7; }
+.mm-map-island { fill: var(--brand); stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.7; }
+.mm-dot { fill: var(--brand-tint); opacity: 0.5; }
+.mm-dot-lit { fill: #fff; }
+.mm-link { fill: none; stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.75; }
+.mm-node-ring { fill: var(--brand-dark); stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
 .mm-node { cursor: pointer; outline: none; }
 .mm-node:hover .mm-node-ring, .mm-node:focus-visible .mm-node-ring { r: 12; stroke-width: 2.5; }
 .mm-node:hover .mm-node-fill, .mm-node:focus-visible .mm-node-fill { opacity: 0.35; }
@@ -1063,7 +1063,7 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-tip { opacity: 0; transform: translateY(4px); transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none; }
 .mm-node:hover .mm-tip, .mm-node:focus-visible .mm-tip { opacity: 1; transform: translateY(0); }
-.mm-tip-bg { fill: rgba(12,16,34,0.94); stroke: rgba(255,255,255,0.2); }
+.mm-tip-bg { fill: var(--brand-dark); stroke: rgba(255,255,255,0.2); }
 .mm-tip-text { font-size: 12px; font-weight: 600; fill: #fff; font-family: var(--font-display); }
 .mm-packet { offset-rotate: 0deg; animation: mm-travel 3.2s linear infinite; }
 @keyframes mm-travel { from { offset-distance: 0%; opacity: 1; } 80% { opacity: 1; } to { offset-distance: 100%; opacity: 0; } }

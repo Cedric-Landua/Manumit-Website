@@ -8,18 +8,8 @@
  * app_state (uptime:<YYYY-MM-DD-HH> = 1). GET /api/status reads the last
  * 24h of buckets: uptimePct = hit buckets / expected buckets, plus a live
  * `status` from whether THIS request succeeded.
- *
- * A bucket only proves the worker answered some request that hour; an
- * empty hour is ambiguous (idle vs down). On a low-traffic site sparse
- * buckets measure traffic, not uptime (periodic manual connections showed
- * ~33% while the worker never went down), so a window's pct is only
- * published when nearly every hour of it was observed — true hourly
- * coverage comes from the `0 * * * *` cron tick in scheduled() below.
- * Under-observed windows report pct: null → the homepage shows
- * "— · collecting data" instead of a false low number.
  */
 function uptimeBucket(d) {
-  // Hourly buckets: 24 writes/reads per day max (was per-minute = 1440+).
   const p = (n) => String(n).padStart(2, '0');
   return `uptime:${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}-${p(d.getUTCHours())}`;
 }
@@ -37,12 +27,7 @@ async function recordUptimeTick(db) {
   } catch (e) { /* uptime must never break traffic */ }
 }
 const UPTIME_WINDOWS = { '24h': 24, '7d': 7 * 24, '30d': 30 * 24 };
-const UPTIME_MAX_SPAN = 30 * 24; // 30d of hourly buckets (was: 1y/all of minutes = 500k+ reads)
-// Windowed read: hits = buckets present in [start, now], expected = hours
-// in that span that have actually elapsed since tracking began. Counting
-// forward from `since` (not probing a fixed window back) means a sparse or
-// fresh tracker can never divide a big hit count by a tiny elapsed span —
-// the >100% bug class is structurally impossible, no clamp needed.
+const UPTIME_MAX_SPAN = 30 * 24;
 async function readUptime(db, windowHours) {
   const now = Date.now();
   let sinceMs = null;
@@ -56,7 +41,6 @@ async function readUptime(db, windowHours) {
   const span = Math.min(windowHours > 0 ? windowHours : elapsedSinceStart, elapsedSinceStart, UPTIME_MAX_SPAN);
   const startMs = now - (span - 1) * 3600000;
   let hits = 0;
-  // D1 caps bound variables (~100); chunk the lookup.
   for (let off = 0; off < span; off += 90) {
     const slice = [];
     for (let m = off; m < Math.min(off + 90, span); m++) {
@@ -70,11 +54,6 @@ async function readUptime(db, windowHours) {
   const pct = Math.round((Math.min(hits, span) / span) * 1000) / 10;
   return { pct, samples: hits, windowMin: span };
 }
-// Publish bar for a window's pct. Sparse organic traffic sits far below
-// this (an hour with no request reads as "down" even when it wasn't);
-// hourly cron coverage stays above it through real outages, so
-// genuine dips still display. Min span keeps an hours-old tracker from
-// flashing 100%.
 const UPTIME_MIN_SPAN = 15;
 const UPTIME_MIN_COVERAGE = 0.9;
 function qualifyWindow(u) {
@@ -82,15 +61,9 @@ function qualifyWindow(u) {
     && u.samples >= Math.floor(u.windowMin * UPTIME_MIN_COVERAGE);
   return { pct: observed ? u.pct : null, samples: u.samples, windowMin: u.windowMin };
 }
-// In-isolate status cache: window reads cost ~10 D1 queries, but buckets only
-// change hourly — recomputing per request burned rows for identical answers.
 const STATUS_CACHE_TTL_MS = 30 * 60 * 1000;
 let statusCache = { body: null, at: 0 };
-/**
- * Visitor → nearest estimate region from Cloudflare geo (no third-party
- * lookup). US edge colos split by coast; everywhere else falls back to
- * continent. Missing geo (local dev) → us-central.
- */
+
 function visitorRegion(cf) {
   cf = cf || {};
   const colo = String(cf.colo || '').toUpperCase();
@@ -108,10 +81,7 @@ function visitorRegion(cf) {
     default: return 'us-central';
   }
 }
-/**
- * Idempotent upkeep for operational state and the Split Task sync counter.
- * Product tables and indexes are installed by an explicit schema migration.
- */
+
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 let schemaCheckedAt = 0;
 let notesOrderCheckedAt = 0;
@@ -141,22 +111,6 @@ async function ensureSchema(db) {
   ]);
 }
 
-/**
- * Which incomplete tasks from before today roll forward one day on this sweep.
- * Today's tasks remain scheduled for today until the next day's sweep.
- *
- * A task with no due date has nothing to stop at, and one that has not reached
- * its due date yet still has runway - both always roll. Past the due date it is
- * the user's "Push back past due date" setting (task_deadline_push_enabled) that
- * decides: on = keep rolling forever, off = park it on the due date so the app
- * can flag it red as priority.
- *
- * Recurring occurrences (recurrence_id IS NOT NULL) never roll: each one
- * belongs to its scheduled day, and the client's generator already drops past
- * occurrences and materializes the window ahead. Rolling one forward would
- * stack it onto a day that already has that series' own occurrence - a
- * double-booking (e.g. Monday's missed "Gym" landing on top of Tuesday's "Gym").
- */
 const ROLLING_TASK_WHERE = `
       type = 'task'
       AND done = 0
@@ -173,10 +127,8 @@ async function runDailySweep(env) {
   const db = env['ST-DATABASE'];
   const today = new Date().toISOString().slice(0, 10);
 
-  // Schema upkeep first; the day must not be claimed on failure.
   await ensureSchemaCached(db);
 
-  // Atomically claim today; changes===0 → another isolate already swept.
   const claim = await db.prepare(`
     INSERT INTO app_state (key, value) VALUES ('last_sweep', ?1)
     ON CONFLICT(key) DO UPDATE SET value = ?1
@@ -195,8 +147,6 @@ async function runDailySweep(env) {
     )
   `).run();
 
-  // Capture affected account IDs first (UPDATE can't report them): bump versions
-  // after so devices re-pull the moved dates.
   const pushTargets = await db.prepare(`
     SELECT DISTINCT user_id FROM split_task_items
     WHERE ${ROLLING_TASK_WHERE}
@@ -208,8 +158,6 @@ async function runDailySweep(env) {
     WHERE ${ROLLING_TASK_WHERE}
   `).run();
 
-  // Without the bump, sweep edits sit server-side until the user pushes: pulls
-  // compare against the sync counter, which POST /api/sync also advances.
   let notified = 0;
   for (const row of (pushTargets.results || [])) {
     try {
@@ -230,9 +178,6 @@ async function runDailySweep(env) {
   };
   console.log(`[sweep] removed ${result.deleted} old items, moved ${result.pushed} incomplete tasks forward by one day, nudged ${result.notified} users to re-pull`);
 
-  // Space hygiene: resolved tickets >1yr drop; hourly uptime buckets keep 30d
-  // (~8.7k rows/yr otherwise, forever); stale rate-limit windows drop.
-  // NOTE: tickets live in ST-TICKETS, everything else in ST-DATABASE — never mix.
   try {
     const tdb = await ticketDb(env);
     await tdb.prepare(
@@ -252,7 +197,6 @@ async function runDailySweep(env) {
   return result;
 }
 
-/** Lazy support_tickets table (same pattern as app_state): endpoints work pre-migration. */
 async function ensureTicketsTable(ticketsDb) {
   await ticketsDb.prepare(`
     CREATE TABLE IF NOT EXISTS support_tickets (
@@ -265,7 +209,6 @@ async function ensureTicketsTable(ticketsDb) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
-  // Older DBs lack email; the ALTER no-ops ("duplicate column") once applied.
   try {
     await ticketsDb.prepare('ALTER TABLE support_tickets ADD COLUMN email TEXT').run();
   } catch (err) {
@@ -290,7 +233,6 @@ async function ensureVocabularyAnswerReviewsTable(ticketsDb) {
   `).run();
 }
 
-// Constant-time string compare (login / sync-auth: no early-exit tells).
 function timingSafeEqual(a, b) {
   const sa = String(a || ''), sb = String(b || '');
   if (sa.length !== sb.length) return false;
@@ -299,15 +241,11 @@ function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-/** Normalize + validate a public username (3-32, a-z0-9_-).
- * Case-insensitive: "Cedric" and "cedric" are the same account — always
- * lowercased here and stored as the login identity's normalized identifier. */
 function normUsername(v) {
   const u = String(v || '').trim().toLowerCase();
   return /^[a-z0-9_-]{3,32}$/.test(u) ? u : '';
 }
 
-/** Find a Split Task login identity; returns the stable user ID and public username. */
 async function findUser(db, username) {
   const u = String(username || '').trim();
   if (!u) return null;
@@ -325,19 +263,16 @@ async function findUser(db, username) {
   ).bind(u.trim().toLowerCase()).first();
 }
 
-/** Normalize a 64-hex client password hash (SHA-256 of the password). */
 function normHash(v) {
   const h = String(v || '').trim().toLowerCase();
   return /^[0-9a-f]{64}$/.test(h) ? h : '';
 }
 
-/** Verify username + client hash against the resolved identity. */
 async function checkUserPassword(db, username, password_hash) {
   const row = await findUser(db, username);
   return !!row && timingSafeEqual(row.password_hash, password_hash);
 }
 
-/** Sliding-window rate limit in app_state: key -> {count, reset}. Fail-open. */
 async function checkRateLimit(db, key, limit, windowMs) {
   const now = Date.now();
   try {
@@ -375,13 +310,6 @@ function rateLimitedResponse(retryAfter, corsHeaders) {
   });
 }
 
-/**
- * Admin bearer check for ticket read/mutate endpoints. The dashboard stores
- * the /api/admin/login token in sessionStorage and sends it as
- * `Authorization: Bearer <token>` (see site/admin.js). Tokens are
- * SHA-256(ADMIN_USERNAME + ':' + ADMIN_PASSWORD_HASH) so they verify
- * statelessly without a session table. Fail-closed: no token => 401.
- */
 async function checkAdminAuth(request, env) {
   try {
     const ADMIN_USERNAME = 'Admin';
@@ -398,14 +326,12 @@ async function checkAdminAuth(request, env) {
   } catch { return false; }
 }
 
-// Ticket DB with the table ensured (replaces 2-line ensure boilerplate).
 async function ticketDb(env) {
   const db = env['ST-TICKETS'];
   await ensureTicketsTable(db);
   return db;
 }
 
-/** Ticket confirmation email via Resend. No-ops without RESEND_API_KEY so submission never breaks. */
 async function sendTicketConfirmation(env, email, ticketId, type, message) {
   if (!email || !env.RESEND_API_KEY) return false;
 
@@ -419,7 +345,7 @@ async function sendTicketConfirmation(env, email, ticketId, type, message) {
 
   const ticketText = typeof message === 'string' ? message : '';
   const article = /^[aeiou]/i.test(typeLabel) ? 'an' : 'a';
-  const escapeHtml = (value) => String(value)
+  const escapeHtmlLocal = (value) => String(value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -428,8 +354,8 @@ async function sendTicketConfirmation(env, email, ticketId, type, message) {
   const html = [
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#111827;">',
     '<p>Hi there,</p>',
-    `<p>Thank you for submitting ${article} <strong>${escapeHtml(typeLabel)}</strong> ticket, ${escapeHtml(followUp)}</p>`,
-    `<p>Your ticket id: ${escapeHtml(ticketId)}<br>Original ticket entry: ${escapeHtml(ticketText).replace(/\r?\n/g, '<br>')}</p>`,
+    `<p>Thank you for submitting ${article} <strong>${escapeHtmlLocal(typeLabel)}</strong> ticket, ${escapeHtmlLocal(followUp)}</p>`,
+    `<p>Your ticket id: ${escapeHtmlLocal(ticketId)}<br>Original ticket entry: ${escapeHtmlLocal(ticketText).replace(/\r?\n/g, '<br>')}</p>`,
     '<p>If you need to add anything, email to <a href="mailto:freeerapps.dev@gmail.com">freeerapps.dev@gmail.com</a>.</p>',
     '<p>- Free-er Apps</p>',
     '</div>',
@@ -462,101 +388,523 @@ async function sendTicketConfirmation(env, email, ticketId, type, message) {
   }
 }
 
-/**
- * Resolve a target username to a stable D1 user_id.
- * Uses the payload username, falling back to DEFAULT_TARGET_USERNAME.
- */
+// ─── OAuth 2.1 + MCP Authorization + Split Task MCP Server ─────────────────
+
+function bytesToBase64url(bytes) {
+  let bin = "";
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  for (let i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64urlToBytes(b64url) {
+  let b64 = String(b64url || "").replace(/-/g, "+").replace(/_/g, "/");
+  while (b64.length % 4) b64 += "=";
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function strToBase64url(str) {
+  return bytesToBase64url(new TextEncoder().encode(String(str)));
+}
+
+function base64urlToStr(b64url) {
+  return new TextDecoder().decode(base64urlToBytes(b64url));
+}
+
+async function sha256Hex(input) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(input)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function signOAuthPayload(payloadObj, secret) {
+  const signingSecret = String(secret || "").trim();
+  const headerB64 = strToBase64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payloadB64 = strToBase64url(JSON.stringify(payloadObj));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(signingSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sigBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(headerB64 + "." + payloadB64)
+  );
+  return headerB64 + "." + payloadB64 + "." + bytesToBase64url(sigBuffer);
+}
+
+async function verifyOAuthPayload(token, secret) {
+  const signingSecret = String(secret || "").trim();
+  const parts = String(token || "").trim().split(".");
+  if (parts.length !== 3) {
+    return { ok: false, reason: "malformed_parts" };
+  }
+  const [headerB64, payloadB64, signatureB64] = parts;
+  const signingInput = headerB64 + "." + payloadB64;
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(signingSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const sig = base64urlToBytes(signatureB64);
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sig,
+      new TextEncoder().encode(signingInput)
+    );
+    if (!valid) {
+      return { ok: false, reason: "bad_signature" };
+    }
+  } catch (e) {
+    return { ok: false, reason: "bad_signature" };
+  }
+  let payload;
+  try {
+    payload = JSON.parse(base64urlToStr(payloadB64));
+  } catch (e) {
+    return { ok: false, reason: "malformed_payload" };
+  }
+  if (!payload || !payload.exp) {
+    return { ok: false, reason: "missing_code" };
+  }
+  const now = Math.floor(Date.now() / 1000);
+  if (now >= payload.exp) {
+    return { ok: false, reason: "expired" };
+  }
+  return { ok: true, payload };
+}
+
+function makeAuthCodePayload(sub, username, redirect_uri, code_challenge, code_challenge_method) {
+  return {
+    type: "code",
+    sub,
+    username,
+    redirect_uri: redirect_uri || null,
+    code_challenge: code_challenge || null,
+    code_challenge_method: code_challenge_method || null,
+    exp: Math.floor(Date.now() / 1000) + 5 * 60,
+  };
+}
+
+function makeAccessTokenPayload(sub, username) {
+  return {
+    type: "access",
+    sub,
+    username,
+    scope: "mcp",
+    exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+  };
+}
+
+function makeRefreshTokenPayload(sub, username) {
+  return {
+    type: "refresh",
+    sub,
+    username,
+    scope: "mcp",
+    exp: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+  };
+}
+
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderAuthorizeForm(params, error) {
+  const { client_id, redirect_uri, state, code_challenge, code_challenge_method, scope } = params;
+  const hidden = [
+    ["client_id", client_id],
+    ["redirect_uri", redirect_uri],
+    ["state", state],
+    ["code_challenge", code_challenge],
+    ["code_challenge_method", code_challenge_method],
+    ["scope", scope],
+  ]
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<input type="hidden" name="${k}" value="${escapeHtml(String(v))}">`)
+    .join("\n      ");
+  const errHtml = error ? `<p class="error">${escapeHtml(error)}</p>` : "";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Sign in to Split Task</title>
+<style>
+  body { margin: 0; height: 100vh; background: #1a2133; color: #f5f6fa; font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
+  .card { max-width: 380px; width: 90%; padding: 32px; border-radius: 16px; background: #232c45; box-shadow: 0 4px 18px rgba(0,0,0,.4); text-align: center; }
+  h1 { font-size: 24px; margin: 0 0 8px; color: #4a6cf7; }
+  p { font-size: 15px; line-height: 1.55; margin: 0 0 20px; color: #b9c0d4; }
+  .error { color: #ff6b6b; font-size: 13px; margin-bottom: 16px; text-align: center; }
+  form { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  label { font-size: 13px; color: #b9c0d4; display: block; margin-bottom: 4px; }
+  input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #3a4563; background: #1a2133; color: #f5f6fa; font-size: 14px; box-sizing: border-box; }
+  button { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #4a6cf7; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 6px; }
+  button:hover { background: #5a7cf7; }
+</style></head>
+<body>
+  <div class="card">
+    <h1>Split Task</h1>
+    <p>Sign in to authorize the MCP connection</p>
+    ${errHtml}
+    <form method="post">
+      ${hidden}
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+      <button type="submit">Authorize</button>
+    </form>
+  </div>
+</body>
+</html>`;
+}
+
+async function handleOAuthRequest(request, env, url, corsHeaders, jsonResponse) {
+  const oauthOrigin = url.origin;
+
+  if ((url.pathname === "/.well-known/oauth-protected-resource" ||
+       url.pathname === "/.well-known/oauth-protected-resource/mcp") &&
+      request.method === "GET") {
+    return jsonResponse({
+      resource: oauthOrigin + "/mcp",
+      authorization_servers: [oauthOrigin],
+      bearer_methods_supported: ["header"],
+      scopes_supported: ["mcp"],
+    });
+  }
+
+  if ((url.pathname === "/.well-known/oauth-authorization-server" ||
+       url.pathname === "/.well-known/openid-configuration") &&
+      request.method === "GET") {
+    return jsonResponse({
+      issuer: oauthOrigin,
+      authorization_endpoint: oauthOrigin + "/oauth/authorize",
+      token_endpoint: oauthOrigin + "/oauth/token",
+      registration_endpoint: oauthOrigin + "/oauth/register",
+      revocation_endpoint: oauthOrigin + "/oauth/revoke",
+      response_types_supported: ["code"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
+      token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
+      code_challenge_methods_supported: ["S256"],
+      scopes_supported: ["mcp"],
+    });
+  }
+
+  if (url.pathname === "/oauth/register" && request.method === "POST") {
+    const len = Number(request.headers.get("content-length") || 0);
+    if (len > 1048576) return jsonResponse({ error: "Payload too large" }, 413);
+    let body;
+    try { body = await request.json(); } catch { return jsonResponse({ error: "Invalid JSON body" }, 400); }
+    const { client_name, redirect_uris, token_endpoint_auth_method } = body || {};
+    if (!Array.isArray(redirect_uris) || redirect_uris.length === 0) {
+      return jsonResponse({ error: "redirect_uris must be a non-empty array" }, 400);
+    }
+    for (const uri of redirect_uris) {
+      try {
+        const u = new URL(uri);
+        const ok = u.protocol === "https:" ||
+          (u.protocol === "http:" && u.hostname === "localhost");
+        if (!ok) {
+          return jsonResponse({ error: "redirect_uris must be HTTPS or http://localhost" }, 400);
+        }
+      } catch {
+        return jsonResponse({ error: "Invalid redirect_uri: " + uri }, 400);
+      }
+    }
+    const authMethod = token_endpoint_auth_method && token_endpoint_auth_method !== "none"
+      ? token_endpoint_auth_method
+      : "none";
+    const resp = {
+      client_id: crypto.randomUUID(),
+      client_name: client_name || null,
+      redirect_uris,
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      token_endpoint_auth_method: authMethod,
+    };
+    if (authMethod !== "none") {
+      resp.client_secret = crypto.randomUUID();
+    }
+    console.log("[oauth/register] client registered:", resp.client_id, "auth_method:", authMethod);
+    return jsonResponse(resp, 201);
+  }
+
+  if (url.pathname === "/oauth/authorize" && request.method === "GET") {
+    const params = {
+      client_id: url.searchParams.get("client_id") || undefined,
+      redirect_uri: url.searchParams.get("redirect_uri") || undefined,
+      state: url.searchParams.get("state") || undefined,
+      code_challenge: url.searchParams.get("code_challenge") || undefined,
+      code_challenge_method: url.searchParams.get("code_challenge_method") || undefined,
+      scope: url.searchParams.get("scope") || undefined,
+    };
+    return new Response(renderAuthorizeForm(params, null), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+
+  if (url.pathname === "/oauth/authorize" && request.method === "POST") {
+    const len = Number(request.headers.get("content-length") || 0);
+    if (len > 1048576) return jsonResponse({ error: "Payload too large" }, 413);
+    let form;
+    try {
+      const ct = request.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        form = await request.json();
+      } else {
+        const text = await request.text();
+        form = Object.fromEntries(new URLSearchParams(text));
+      }
+    } catch {
+      return jsonResponse({ error: "Invalid request body" }, 400);
+    }
+
+    const username = form?.username;
+    const password = form?.password;
+    const client_id = url.searchParams.get("client_id") || form?.client_id;
+    const redirect_uri = url.searchParams.get("redirect_uri") || form?.redirect_uri;
+    const state = url.searchParams.get("state") || form?.state;
+    const code_challenge = url.searchParams.get("code_challenge") || form?.code_challenge;
+    const code_challenge_method = url.searchParams.get("code_challenge_method") || form?.code_challenge_method;
+    const scope = url.searchParams.get("scope") || form?.scope;
+
+    const oauthParams = { client_id, redirect_uri, state, code_challenge, code_challenge_method, scope };
+
+    if (!username || !password) {
+      return new Response(renderAuthorizeForm(oauthParams, "Username and password are required"), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+
+    const db = env["ST-DATABASE"];
+    const passwordHash = await sha256Hex(String(password));
+    if (!db || !(await checkUserPassword(db, String(username), passwordHash))) {
+      console.log("[oauth/authorize] invalid credentials for username:", String(username));
+      return new Response(renderAuthorizeForm(oauthParams, "Invalid username or password"), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+
+    const account = await findUser(db, String(username));
+    if (!account) {
+      return new Response(renderAuthorizeForm(oauthParams, "Invalid username or password"), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+
+    const codePayload = makeAuthCodePayload(
+      account.user_id,
+      account.username,
+      redirect_uri,
+      code_challenge,
+      code_challenge_method
+    );
+    const code = await signOAuthPayload(codePayload, env.MCP_API_KEY);
+    console.log("[oauth/authorize] auth code issued for user:", account.username);
+
+    const redirectUrl = new URL(redirect_uri || "/");
+    redirectUrl.searchParams.set("code", code);
+    if (state) redirectUrl.searchParams.set("state", state);
+    return new Response(null, {
+      status: 302,
+      headers: { Location: redirectUrl.toString(), ...corsHeaders },
+    });
+  }
+
+  if (url.pathname === "/oauth/token" && request.method === "POST") {
+    const len = Number(request.headers.get("content-length") || 0);
+    if (len > 1048576) return jsonResponse({ error: "Payload too large" }, 413);
+    let body;
+    try {
+      const ct = request.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        body = await request.json();
+      } else {
+        const text = await request.text();
+        body = Object.fromEntries(new URLSearchParams(text));
+      }
+    } catch {
+      return jsonResponse({ error: "Invalid request body" }, 400);
+    }
+
+    let clientId = body?.client_id;
+    let clientSecret = body?.client_secret;
+    if ((!clientId || !clientSecret) && request.headers.get("authorization")) {
+      const auth = request.headers.get("authorization") || "";
+      const basicMatch = /^Basic\s+(.+)$/i.exec(auth);
+      if (basicMatch) {
+        try {
+          const decoded = new TextDecoder().decode(base64urlToBytes(basicMatch[1]));
+          const colon = decoded.indexOf(":");
+          if (colon !== -1) {
+            if (!clientId) clientId = decodeURIComponent(decoded.slice(0, colon));
+            if (!clientSecret) clientSecret = decodeURIComponent(decoded.slice(colon + 1));
+          }
+        } catch { /* ignore malformed basic auth */ }
+      }
+    }
+
+    const { grant_type, code, redirect_uri, code_verifier, refresh_token } = body || {};
+    const normalizeUri = (u) => String(u || "").replace(/\/$/, "");
+
+    if (grant_type === "refresh_token") {
+      if (!refresh_token) {
+        return jsonResponse({ error: "invalid_request", error_description: "refresh_token is required" }, 400);
+      }
+      const result = await verifyOAuthPayload(refresh_token, env.MCP_API_KEY);
+      if (!result.ok || !result.payload || result.payload.type !== "refresh") {
+        console.log("[oauth/token] invalid refresh_token:", result.reason);
+        return jsonResponse({ error: "invalid_grant", error_description: "Invalid or expired refresh token" }, 400);
+      }
+      const payload = result.payload;
+      const access_token = await signOAuthPayload(makeAccessTokenPayload(payload.sub, payload.username), env.MCP_API_KEY);
+      const new_refresh_token = await signOAuthPayload(makeRefreshTokenPayload(payload.sub, payload.username), env.MCP_API_KEY);
+      console.log("[oauth/token] refresh_token grant ok for user:", payload.username);
+      return jsonResponse({
+        access_token,
+        refresh_token: new_refresh_token,
+        token_type: "Bearer",
+        expires_in: 2592000,
+        scope: "mcp",
+      });
+    }
+
+    if (grant_type !== "authorization_code") {
+      return jsonResponse({ error: "unsupported_grant_type" }, 400);
+    }
+    if (!code) {
+      return jsonResponse({ error: "invalid_request", error_description: "code is required" }, 400);
+    }
+
+    const result = await verifyOAuthPayload(code, env.MCP_API_KEY);
+    if (!result.ok || !result.payload || result.payload.type !== "code") {
+      console.log("[oauth/token] invalid auth code:", result.reason);
+      return jsonResponse({ error: "invalid_grant", error_description: "Invalid or expired authorization code" }, 400);
+    }
+    const payload = result.payload;
+
+    const codeUri = normalizeUri(payload.redirect_uri);
+    const reqUri = normalizeUri(redirect_uri);
+    if (codeUri && reqUri && codeUri !== reqUri) {
+      console.log("[oauth/token] redirect_uri mismatch:", codeUri, "!==", reqUri);
+      return jsonResponse({ error: "invalid_grant", error_description: "redirect_uri mismatch" }, 400);
+    }
+
+    if (payload.code_challenge) {
+      if (!code_verifier) {
+        return jsonResponse({ error: "invalid_grant", error_description: "code_verifier required" }, 400);
+      }
+      const digestBuf = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(String(code_verifier))
+      );
+      const challenge = bytesToBase64url(digestBuf);
+      if (challenge !== payload.code_challenge) {
+        console.log("[oauth/token] code_verifier mismatch");
+        return jsonResponse({ error: "invalid_grant", error_description: "code_verifier mismatch" }, 400);
+      }
+    }
+
+    const access_token = await signOAuthPayload(makeAccessTokenPayload(payload.sub, payload.username), env.MCP_API_KEY);
+    const new_refresh_token = await signOAuthPayload(makeRefreshTokenPayload(payload.sub, payload.username), env.MCP_API_KEY);
+    console.log("[oauth/token] authorization_code grant ok for user:", payload.username);
+    return jsonResponse({
+      access_token,
+      refresh_token: new_refresh_token,
+      token_type: "Bearer",
+      expires_in: 2592000,
+      scope: "mcp",
+    });
+  }
+
+  if (url.pathname === "/oauth/revoke" && request.method === "POST") {
+    return jsonResponse({ revoked: true }, 200);
+  }
+
+  return jsonResponse({ error: "Not found" }, 404);
+}
+
 async function resolveTargetUserFromDb(db, username) {
   const u = normUsername(username);
   if (!u) return null;
   return findUser(db, u);
 }
-/**
- * Verify the MCP API key from Authorization: Bearer <key> or ?key=<key>.
- */
+
 async function verifyMcpAuth(request, env) {
   const expected = env.MCP_API_KEY;
-  if (!expected || typeof expected !== "string") return false;
   const auth = request.headers.get("authorization") || "";
-  let provided = "";
-  if (auth.startsWith("Bearer ") || auth.startsWith("bearer ")) {
-    provided = auth.slice(7).trim();
-  } else {
+  const bearerToken = (auth.startsWith("Bearer ") || auth.startsWith("bearer "))
+    ? auth.slice(7).trim()
+    : "";
+
+  if (bearerToken && expected && typeof expected === "string") {
     try {
-      provided = new URL(request.url).searchParams.get("key") || "";
-    } catch { provided = ""; }
+      const result = await verifyOAuthPayload(bearerToken, expected);
+      if (result.ok && result.payload && result.payload.type === "access") {
+        return {
+          ok: true,
+          type: "oauth",
+          user_id: result.payload.sub,
+          username: result.payload.username,
+        };
+      }
+    } catch { /* fall through to legacy */ }
   }
-  if (!provided) return false;
-  return timingSafeEqual(provided, expected);
+
+  if (expected && typeof expected === "string") {
+    let provided = "";
+    if (bearerToken) {
+      provided = bearerToken;
+    } else {
+      try {
+        provided = new URL(request.url).searchParams.get("key") || "";
+      } catch { provided = ""; }
+    }
+    if (provided && timingSafeEqual(provided, String(expected).trim())) {
+      return { ok: true, type: "legacy" };
+    }
+  }
+
+  return { ok: false };
 }
-/**
- * Create a split_task_items row from an external agent / MCP payload.
- * Matches the exact split_task_items schema and bumps the per-user sync
- * version so connected clients pull the new item on their next sync.
- *
- * Dedupes on (title) or (URL embedded in notes) for the target user so
- * daily scans never create duplicate items.
- *
- * @returns {inserted:boolean, id:string, reason:string}
- */
-async function createTaskFromAgent(env, payload) {
+
+async function resolveMcpUserId(env, mcpAuth, usernameArg) {
   const db = env["ST-DATABASE"];
   if (!db) throw new Error("D1 binding ST-DATABASE is not configured");
 
-  const title = String(payload.title || "").trim();
-  const date = String(payload.date || "").trim();
-  const url = String(payload.url || "").trim();
-  const notes = String(payload.notes || "").trim();
-  const username =
-    String(payload.username || "").trim() ||
-    String(env.DEFAULT_TARGET_USERNAME || "").trim();
-
-  if (!title) throw new Error("title is required");
-  const account = await resolveTargetUserFromDb(db, username);
-  if (!account) throw new Error(`Unknown target user: ${username || "(none)"}`);
-  const userId = account.user_id;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const itemDate = date || today;
-  const id = crypto.randomUUID();
-  const nowIso = new Date().toISOString();
-
-  // --- Deduplication: same title OR same URL already present for this user ---
-  const conditions = ["title = ?"];
-  const params = [userId, title];
-  if (url) {
-    conditions.push("notes LIKE ?");
-    params.push(`%Source: ${url}%`);
-  }
-  const existing = await db
-    .prepare(
-      `SELECT id FROM split_task_items WHERE user_id = ? AND (${
-        conditions.join(" OR ")
-      }) LIMIT 1`
-    )
-    .bind(...params)
-    .first();
-  if (existing) {
-    return { inserted: false, id: existing.id, reason: "duplicate" };
+  if (usernameArg && String(usernameArg).trim()) {
+    const account = await resolveTargetUserFromDb(db, String(usernameArg).trim());
+    if (!account) throw new Error(`Unknown target user: ${usernameArg}`);
+    return account.user_id;
   }
 
-  const urlLine = url ? `\nSource: ${url}` : "";
-  const notesText = [notes, urlLine]
-    .filter(Boolean)
-    .join("\n")
-    .trim() || null;
+  if (mcpAuth?.type === "oauth" && mcpAuth.user_id) {
+    return mcpAuth.user_id;
+  }
 
-  await db
-    .prepare(
-      `INSERT INTO split_task_items (
-        id, user_id, type, title, category_id, item_date, due_date,
-        done, notes, updated_at
-      ) VALUES (?, ?, 'task', ?, 'default', ?, ?, 0, ?, ?)`
-    )
-    .bind(id, userId, title, itemDate, itemDate, notesText, nowIso)
-    .run();
+  const fallbackUsername = String(env.DEFAULT_TARGET_USERNAME || "").trim();
+  const account = await resolveTargetUserFromDb(db, fallbackUsername);
+  if (!account) throw new Error(`Unknown target user: ${fallbackUsername || "(none)"}`);
+  return account.user_id;
+}
 
-  // Bump the sync version so connected clients re-pull on next sync.
+async function bumpSyncVersion(db, userId) {
   try {
     await db
       .prepare(
@@ -567,16 +915,86 @@ async function createTaskFromAgent(env, payload) {
       .bind(userId)
       .run();
   } catch (e) {
-    console.warn("[agent/ingest] sync version bump skipped:", e?.message || e);
+    console.warn("[mcp] sync version bump skipped:", e?.message || e);
+  }
+}
+
+async function createTaskFromAgent(env, payload, explicitUserId = null) {
+  const db = env["ST-DATABASE"];
+  if (!db) throw new Error("D1 binding ST-DATABASE is not configured");
+
+  const title = String(payload.title || "").trim();
+  const date = String(payload.date || "").trim();
+  const dueDate = String(payload.due_date || "").trim();
+  const deadline = String(payload.deadline || "").trim();
+  const categoryId = String(payload.category_id || "").trim() || "default";
+  const url = String(payload.url || "").trim();
+  const notes = String(payload.notes || "").trim();
+  const shouldDedupe = payload.dedupe !== undefined ? Boolean(payload.dedupe) : true;
+
+  if (!title) throw new Error("title is required");
+
+  let userId = explicitUserId;
+  if (!userId) {
+    const username =
+      String(payload.username || "").trim() ||
+      String(env.DEFAULT_TARGET_USERNAME || "").trim();
+    const account = await resolveTargetUserFromDb(db, username);
+    if (!account) throw new Error(`Unknown target user: ${username || "(none)"}`);
+    userId = account.user_id;
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const itemDate = date || today;
+  const effectiveDueDate = dueDate || itemDate;
+  const id = crypto.randomUUID();
+  const nowIso = new Date().toISOString();
+
+  if (shouldDedupe) {
+    const conditions = ["title = ?"];
+    const params = [userId, title];
+    if (url) {
+      conditions.push("notes LIKE ?");
+      params.push(`%Source: ${url}%`);
+    }
+    const existing = await db
+      .prepare(
+        `SELECT id FROM split_task_items WHERE user_id = ? AND (${conditions.join(" OR ")}) LIMIT 1`
+      )
+      .bind(...params)
+      .first();
+    if (existing) {
+      return { inserted: false, id: existing.id, reason: "duplicate" };
+    }
+  }
+
+  const urlLine = url ? `\nSource: ${url}` : "";
+  const notesText = [notes, urlLine].filter(Boolean).join("\n").trim() || null;
+
+  await db
+    .prepare(
+      `INSERT INTO split_task_items (
+        id, user_id, type, title, category_id, item_date, due_date, deadline,
+        done, notes, updated_at
+      ) VALUES (?, ?, 'task', ?, ?, ?, ?, ?, 0, ?, ?)`
+    )
+    .bind(
+      id,
+      userId,
+      title,
+      categoryId,
+      itemDate,
+      effectiveDueDate,
+      deadline || null,
+      notesText,
+      nowIso
+    )
+    .run();
+
+  await bumpSyncVersion(db, userId);
   return { inserted: true, id };
 }
-/**
- * POST /api/agent/ingest handler. Accepts a single item object or an array
- * of { title, date, url, notes, username } and ingests each through
- * createTaskFromAgent.
- */
+
 async function handleAgentIngest(request, env, jsonResponse) {
   let body;
   try {
@@ -586,10 +1004,7 @@ async function handleAgentIngest(request, env, jsonResponse) {
   }
   const items = Array.isArray(body) ? body : [body];
   if (!items.length || items.some((it) => !it || typeof it !== "object")) {
-    return jsonResponse(
-      { error: "Expected an item object or array of items" },
-      400
-    );
+    return jsonResponse({ error: "Expected an item object or array of items" }, 400);
   }
 
   const results = [];
@@ -614,10 +1029,581 @@ async function handleAgentIngest(request, env, jsonResponse) {
     allFailed ? 400 : 200
   );
 }
+
+const MCP_TOOLS = [
+  {
+    name: "read_tasks",
+    description: "Read tasks from Split Task. Optional filters: date_from, date_to, category_id, include_done (default false).",
+    annotations: { readOnlyHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        date_from: { type: "string", description: "Start date YYYY-MM-DD (inclusive)" },
+        date_to: { type: "string", description: "End date YYYY-MM-DD (inclusive)" },
+        category_id: { type: "string", description: "Filter by category ID" },
+        include_done: { type: "boolean", description: "Include completed tasks (default false)" },
+        username: { type: "string", description: "Optional target username" },
+      },
+    },
+  },
+  {
+    name: "read_events",
+    description: "Read calendar events from Split Task. Optional filters: date_from, date_to, category_id.",
+    annotations: { readOnlyHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        date_from: { type: "string", description: "Start date YYYY-MM-DD (inclusive)" },
+        date_to: { type: "string", description: "End date YYYY-MM-DD (inclusive)" },
+        category_id: { type: "string", description: "Filter by category ID" },
+        username: { type: "string", description: "Optional target username" },
+      },
+    },
+  },
+  {
+    name: "read_all",
+    description: "Read tasks, calendar events, and categories together from Split Task (excludes private notes; use read_notes separately if needed).",
+    annotations: { readOnlyHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        date_from: { type: "string", description: "Start date YYYY-MM-DD (inclusive)" },
+        date_to: { type: "string", description: "End date YYYY-MM-DD (inclusive)" },
+        category_id: { type: "string", description: "Filter by category ID" },
+        include_done: { type: "boolean", description: "Include completed tasks (default false)" },
+        username: { type: "string", description: "Optional target username" },
+      },
+    },
+  },
+  {
+    name: "read_notes",
+    description: "Read user notes from Split Task. IMPORTANT: Notes may contain private personal content—always ask the user for explicit confirmation before calling this tool unless they just directly asked to read their notes.",
+    annotations: { readOnlyHint: true, openWorldHint: false },
+    inputSchema: {
+      type: "object",
+      properties: {
+        category_id: { type: "string", description: "Optional category ID filter" },
+        include_hidden: { type: "boolean", description: "Include hidden notes (default false)" },
+        username: { type: "string", description: "Optional target username" },
+      },
+    },
+  },
+  {
+    name: "add_task",
+    description: "Add a new task to Split Task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Task title" },
+        date: { type: "string", description: "Scheduled date in YYYY-MM-DD format (defaults to today)" },
+        due_date: { type: "string", description: "Due date in YYYY-MM-DD format" },
+        deadline: { type: "string", description: "Optional deadline string" },
+        category_id: { type: "string", description: "Category ID (defaults to 'default')" },
+        notes: { type: "string", description: "Optional notes" },
+        url: { type: "string", description: "Optional reference URL" },
+        dedupe: { type: "boolean", description: "Skip insert if identical title/URL exists (default false)" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "add_upcoming_opportunity",
+    description: "Add an upcoming opportunity, hackathon, or application deadline to Split Task (automatically deduplicates by title or URL).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Title of the hackathon, program, or opportunity" },
+        date: { type: "string", description: "Target or deadline date in YYYY-MM-DD format" },
+        url: { type: "string", description: "Link to the opportunity" },
+        notes: { type: "string", description: "Details, eligibility, or description" },
+        category_id: { type: "string", description: "Optional category ID (defaults to 'default')" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "edit_task",
+    description: "Edit an existing task in Split Task by ID.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Task ID" },
+        title: { type: "string", description: "Updated title" },
+        date: { type: "string", description: "Updated scheduled date YYYY-MM-DD" },
+        due_date: { type: "string", description: "Updated due date YYYY-MM-DD" },
+        deadline: { type: "string", description: "Updated deadline" },
+        category_id: { type: "string", description: "Updated category ID" },
+        done: { type: "boolean", description: "Completion status" },
+        notes: { type: "string", description: "Updated notes" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "add_event",
+    description: "Add a new calendar event to Split Task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Event title" },
+        date: { type: "string", description: "Event date in YYYY-MM-DD format" },
+        start_time: { type: "string", description: "Start time in HH:MM format (24h)" },
+        end_time: { type: "string", description: "End time in HH:MM format (24h)" },
+        location: { type: "string", description: "Optional location" },
+        category_id: { type: "string", description: "Category ID (defaults to 'default')" },
+        notes: { type: "string", description: "Optional notes" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["title", "date"],
+    },
+  },
+  {
+    name: "edit_event",
+    description: "Edit an existing calendar event in Split Task by ID.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Event ID" },
+        title: { type: "string", description: "Updated title" },
+        date: { type: "string", description: "Updated event date YYYY-MM-DD" },
+        start_time: { type: "string", description: "Updated start time HH:MM" },
+        end_time: { type: "string", description: "Updated end time HH:MM" },
+        location: { type: "string", description: "Updated location" },
+        category_id: { type: "string", description: "Updated category ID" },
+        notes: { type: "string", description: "Updated notes" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "add_note",
+    description: "Create a new note in Split Task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: { type: "string", description: "Note text content" },
+        category_id: { type: "string", description: "Optional category ID" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["text"],
+    },
+  },
+  {
+    name: "edit_note",
+    description: "Edit an existing unencrypted note in Split Task by ID.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Note ID" },
+        text: { type: "string", description: "Updated note text" },
+        category_id: { type: "string", description: "Updated category ID (or null)" },
+        hidden: { type: "boolean", description: "Whether note is hidden" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "add_category",
+    description: "Create a new category in Split Task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Category name" },
+        color: { type: "string", description: "Hex color code (default '#344271')" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "edit_category",
+    description: "Edit an existing category's name or color in Split Task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Category ID" },
+        name: { type: "string", description: "Updated category name" },
+        color: { type: "string", description: "Updated hex color code" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "delete_category",
+    description: "Delete a custom category in Split Task and reassign its tasks/events to 'default'. Cannot delete 'default'.",
+    annotations: { destructiveHint: true },
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Category ID to delete" },
+        username: { type: "string", description: "Optional target username" },
+      },
+      required: ["id"],
+    },
+  },
+];
+
+async function executeMcpTool(name, rawArgs, env, mcpAuth) {
+  const args = rawArgs && typeof rawArgs === "object" ? rawArgs : {};
+  const db = env["ST-DATABASE"];
+  if (!db) throw new Error("D1 binding ST-DATABASE is not configured");
+  const userId = await resolveMcpUserId(env, mcpAuth, args.username);
+  const nowIso = new Date().toISOString();
+
+  if (name === "read_tasks") {
+    let sql = "SELECT id, title, category_id, item_date, due_date, deadline, done, finished_at, notes, updated_at FROM split_task_items WHERE user_id = ? AND type = 'task'";
+    const binds = [userId];
+    if (args.date_from) { sql += " AND item_date >= ?"; binds.push(String(args.date_from)); }
+    if (args.date_to) { sql += " AND item_date <= ?"; binds.push(String(args.date_to)); }
+    if (args.category_id) { sql += " AND category_id = ?"; binds.push(String(args.category_id)); }
+    if (!args.include_done) { sql += " AND done = 0"; }
+    sql += " ORDER BY item_date ASC, updated_at DESC LIMIT 200";
+    const rows = await db.prepare(sql).bind(...binds).all();
+    return { tasks: rows.results || [] };
+  }
+
+  if (name === "read_events") {
+    let sql = "SELECT id, title, category_id, item_date, start_time, end_time, location, notes, recurrence, updated_at FROM split_task_items WHERE user_id = ? AND type = 'event'";
+    const binds = [userId];
+    if (args.date_from) { sql += " AND item_date >= ?"; binds.push(String(args.date_from)); }
+    if (args.date_to) { sql += " AND item_date <= ?"; binds.push(String(args.date_to)); }
+    if (args.category_id) { sql += " AND category_id = ?"; binds.push(String(args.category_id)); }
+    sql += " ORDER BY item_date ASC, start_time ASC LIMIT 200";
+    const rows = await db.prepare(sql).bind(...binds).all();
+    return { events: rows.results || [] };
+  }
+
+  if (name === "read_all") {
+    let taskSql = "SELECT id, title, category_id, item_date, due_date, deadline, done, notes FROM split_task_items WHERE user_id = ? AND type = 'task'";
+    const taskBinds = [userId];
+    if (args.date_from) { taskSql += " AND item_date >= ?"; taskBinds.push(String(args.date_from)); }
+    if (args.date_to) { taskSql += " AND item_date <= ?"; taskBinds.push(String(args.date_to)); }
+    if (args.category_id) { taskSql += " AND category_id = ?"; taskBinds.push(String(args.category_id)); }
+    if (!args.include_done) { taskSql += " AND done = 0"; }
+    taskSql += " ORDER BY item_date ASC LIMIT 150";
+
+    let eventSql = "SELECT id, title, category_id, item_date, start_time, end_time, location, notes FROM split_task_items WHERE user_id = ? AND type = 'event'";
+    const eventBinds = [userId];
+    if (args.date_from) { eventSql += " AND item_date >= ?"; eventBinds.push(String(args.date_from)); }
+    if (args.date_to) { eventSql += " AND item_date <= ?"; eventBinds.push(String(args.date_to)); }
+    if (args.category_id) { eventSql += " AND category_id = ?"; eventBinds.push(String(args.category_id)); }
+    eventSql += " ORDER BY item_date ASC, start_time ASC LIMIT 150";
+
+    const [tRes, eRes, cRes] = await db.batch([
+      db.prepare(taskSql).bind(...taskBinds),
+      db.prepare(eventSql).bind(...eventBinds),
+      db.prepare("SELECT id, name, color FROM split_task_categories WHERE user_id = ?").bind(userId),
+    ]);
+    return {
+      tasks: tRes?.results || [],
+      events: eRes?.results || [],
+      categories: cRes?.results || [],
+    };
+  }
+
+  if (name === "read_notes") {
+    await ensureNotesOrderColumn(db);
+    let sql = "SELECT id, text, category_id, created_at, updated_at, hidden, text_is_encrypted, sort_order FROM split_task_notes WHERE user_id = ?";
+    const binds = [userId];
+    if (args.category_id) { sql += " AND category_id = ?"; binds.push(String(args.category_id)); }
+    if (!args.include_hidden) { sql += " AND COALESCE(hidden, 0) = 0"; }
+    sql += " ORDER BY sort_order ASC, created_at DESC LIMIT 100";
+    const rows = await db.prepare(sql).bind(...binds).all();
+    const notes = (rows.results || []).map((n) => ({
+      ...n,
+      text: Number(n.text_is_encrypted) === 1 ? "[Encrypted note — view in Split Task app]" : n.text,
+    }));
+    return { notes };
+  }
+
+  if (name === "add_task") {
+    return createTaskFromAgent(env, { ...args, dedupe: args.dedupe === true }, userId);
+  }
+
+  if (name === "add_upcoming_opportunity") {
+    return createTaskFromAgent(env, { ...args, dedupe: true }, userId);
+  }
+
+  if (name === "edit_task") {
+    const id = String(args.id || "").trim();
+    if (!id) throw new Error("id is required");
+    const existing = await db.prepare("SELECT id FROM split_task_items WHERE id = ? AND user_id = ? AND type = 'task'").bind(id, userId).first();
+    if (!existing) return { updated: false, reason: "not_found" };
+
+    const sets = [];
+    const binds = [];
+    if (args.title !== undefined) { sets.push("title = ?"); binds.push(String(args.title).trim()); }
+    if (args.date !== undefined) { sets.push("item_date = ?"); binds.push(String(args.date).trim()); }
+    if (args.due_date !== undefined) { sets.push("due_date = ?"); binds.push(args.due_date ? String(args.due_date).trim() : null); }
+    if (args.deadline !== undefined) { sets.push("deadline = ?"); binds.push(args.deadline ? String(args.deadline).trim() : null); }
+    if (args.category_id !== undefined) { sets.push("category_id = ?"); binds.push(String(args.category_id).trim() || "default"); }
+    if (args.notes !== undefined) { sets.push("notes = ?"); binds.push(args.notes === null ? null : String(args.notes)); }
+    if (args.done !== undefined) {
+      const isDone = Boolean(args.done);
+      sets.push("done = ?");
+      binds.push(isDone ? 1 : 0);
+      sets.push("finished_at = ?");
+      binds.push(isDone ? nowIso : null);
+    }
+    sets.push("updated_at = ?");
+    binds.push(nowIso, id, userId);
+
+    await db.prepare(`UPDATE split_task_items SET ${sets.join(", ")} WHERE id = ? AND user_id = ? AND type = 'task'`).bind(...binds).run();
+    await bumpSyncVersion(db, userId);
+    return { updated: true, id };
+  }
+
+  if (name === "add_event") {
+    const title = String(args.title || "").trim();
+    const itemDate = String(args.date || "").trim();
+    if (!title || !itemDate) throw new Error("title and date are required");
+    const id = crypto.randomUUID();
+    await db.prepare(`
+      INSERT INTO split_task_items (
+        id, user_id, type, title, category_id, item_date, done,
+        start_time, end_time, location, notes, updated_at
+      ) VALUES (?, ?, 'event', ?, ?, ?, 0, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      userId,
+      title,
+      String(args.category_id || "").trim() || "default",
+      itemDate,
+      args.start_time ? String(args.start_time).trim() : null,
+      args.end_time ? String(args.end_time).trim() : null,
+      args.location ? String(args.location).trim() : null,
+      args.notes ? String(args.notes).trim() : null,
+      nowIso
+    ).run();
+    await bumpSyncVersion(db, userId);
+    return { inserted: true, id };
+  }
+
+  if (name === "edit_event") {
+    const id = String(args.id || "").trim();
+    if (!id) throw new Error("id is required");
+    const existing = await db.prepare("SELECT id FROM split_task_items WHERE id = ? AND user_id = ? AND type = 'event'").bind(id, userId).first();
+    if (!existing) return { updated: false, reason: "not_found" };
+
+    const sets = [];
+    const binds = [];
+    if (args.title !== undefined) { sets.push("title = ?"); binds.push(String(args.title).trim()); }
+    if (args.date !== undefined) { sets.push("item_date = ?"); binds.push(String(args.date).trim()); }
+    if (args.start_time !== undefined) { sets.push("start_time = ?"); binds.push(args.start_time ? String(args.start_time).trim() : null); }
+    if (args.end_time !== undefined) { sets.push("end_time = ?"); binds.push(args.end_time ? String(args.end_time).trim() : null); }
+    if (args.location !== undefined) { sets.push("location = ?"); binds.push(args.location ? String(args.location).trim() : null); }
+    if (args.category_id !== undefined) { sets.push("category_id = ?"); binds.push(String(args.category_id).trim() || "default"); }
+    if (args.notes !== undefined) { sets.push("notes = ?"); binds.push(args.notes === null ? null : String(args.notes)); }
+    sets.push("updated_at = ?");
+    binds.push(nowIso, id, userId);
+
+    await db.prepare(`UPDATE split_task_items SET ${sets.join(", ")} WHERE id = ? AND user_id = ? AND type = 'event'`).bind(...binds).run();
+    await bumpSyncVersion(db, userId);
+    return { updated: true, id };
+  }
+
+  if (name === "add_note") {
+    const text = String(args.text || "").trim();
+    if (!text) throw new Error("text is required");
+    await ensureNotesOrderColumn(db);
+    const id = crypto.randomUUID();
+    await db.prepare(`
+      INSERT INTO split_task_notes (
+        id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted, sort_order
+      ) VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0)
+    `).bind(
+      id,
+      userId,
+      text,
+      args.category_id ? String(args.category_id).trim() : null,
+      nowIso,
+      nowIso
+    ).run();
+    await bumpSyncVersion(db, userId);
+    return { inserted: true, id };
+  }
+
+  if (name === "edit_note") {
+    const id = String(args.id || "").trim();
+    if (!id) throw new Error("id is required");
+    const existing = await db.prepare("SELECT id, text_is_encrypted FROM split_task_notes WHERE id = ? AND user_id = ?").bind(id, userId).first();
+    if (!existing) return { updated: false, reason: "not_found" };
+    if (Number(existing.text_is_encrypted) === 1) {
+      throw new Error("Cannot edit an encrypted note via MCP");
+    }
+
+    const sets = [];
+    const binds = [];
+    if (args.text !== undefined) { sets.push("text = ?"); binds.push(String(args.text)); }
+    if (args.category_id !== undefined) { sets.push("category_id = ?"); binds.push(args.category_id ? String(args.category_id).trim() : null); }
+    if (args.hidden !== undefined) { sets.push("hidden = ?"); binds.push(args.hidden ? 1 : 0); }
+    sets.push("updated_at = ?");
+    binds.push(nowIso, id, userId);
+
+    await db.prepare(`UPDATE split_task_notes SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`).bind(...binds).run();
+    await bumpSyncVersion(db, userId);
+    return { updated: true, id };
+  }
+
+  if (name === "add_category") {
+    const catName = String(args.name || "").trim();
+    if (!catName) throw new Error("name is required");
+    const color = /^#[0-9a-fA-F]{6}$/.test(String(args.color || "").trim())
+      ? String(args.color).trim()
+      : "#344271";
+    const id = crypto.randomUUID();
+    await db.prepare(`
+      INSERT INTO split_task_categories (id, user_id, name, color, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(id, userId, catName, color, nowIso).run();
+    await bumpSyncVersion(db, userId);
+    return { inserted: true, id, name: catName, color };
+  }
+
+  if (name === "edit_category") {
+    const id = String(args.id || "").trim();
+    if (!id) throw new Error("id is required");
+    const existing = await db.prepare("SELECT id FROM split_task_categories WHERE id = ? AND user_id = ?").bind(id, userId).first();
+    if (!existing) return { updated: false, reason: "not_found" };
+
+    const sets = [];
+    const binds = [];
+    if (args.name !== undefined) { sets.push("name = ?"); binds.push(String(args.name).trim()); }
+    if (args.color !== undefined) {
+      const color = /^#[0-9a-fA-F]{6}$/.test(String(args.color).trim())
+        ? String(args.color).trim()
+        : "#344271";
+      sets.push("color = ?");
+      binds.push(color);
+    }
+    sets.push("updated_at = ?");
+    binds.push(nowIso, id, userId);
+
+    await db.prepare(`UPDATE split_task_categories SET ${sets.join(", ")} WHERE id = ? AND user_id = ?`).bind(...binds).run();
+    await bumpSyncVersion(db, userId);
+    return { updated: true, id };
+  }
+
+  if (name === "delete_category") {
+    const id = String(args.id || "").trim();
+    if (!id) throw new Error("id is required");
+    if (id === "default") throw new Error("Cannot delete the 'default' category");
+    const existing = await db.prepare("SELECT id FROM split_task_categories WHERE id = ? AND user_id = ?").bind(id, userId).first();
+    if (!existing) return { deleted: false, reason: "not_found" };
+
+    await db.batch([
+      db.prepare("UPDATE split_task_items SET category_id = 'default', updated_at = ? WHERE user_id = ? AND category_id = ?").bind(nowIso, userId, id),
+      db.prepare("UPDATE split_task_notes SET category_id = NULL, updated_at = ? WHERE user_id = ? AND category_id = ?").bind(nowIso, userId, id),
+      db.prepare("DELETE FROM split_task_categories WHERE id = ? AND user_id = ?").bind(id, userId),
+    ]);
+    await bumpSyncVersion(db, userId);
+    return { deleted: true, id };
+  }
+
+  throw new Error(`Unknown tool: ${name}`);
+}
+
+async function handleMcpRequest(request, env, corsHeaders, jsonResponse) {
+  const url = new URL(request.url);
+  const mcpAuth = await verifyMcpAuth(request, env);
+  if (!mcpAuth.ok) {
+    return new Response(null, {
+      status: 401,
+      headers: {
+        ...corsHeaders,
+        "WWW-Authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource"`,
+      },
+    });
+  }
+
+  if (request.method === "GET") {
+    return new Response(": connected\n\n", {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
+  if (request.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
+  let rpc;
+  try {
+    rpc = await request.json();
+  } catch {
+    return jsonResponse({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
+  }
+
+  if (rpc.id === undefined || rpc.id === null) {
+    return new Response(null, { status: 202, headers: corsHeaders });
+  }
+
+  const sessionId = request.headers.get("mcp-session-id") || crypto.randomUUID();
+  const mcpJson = (payload, status = 200) =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+        "Mcp-Session-Id": sessionId,
+      },
+    });
+
+  const rpcOk = (result) => mcpJson({ jsonrpc: "2.0", id: rpc.id, result });
+  const rpcErr = (code, message) => mcpJson({ jsonrpc: "2.0", id: rpc.id, error: { code, message } });
+
+  if (rpc.method === "initialize") {
+    return rpcOk({
+      protocolVersion: rpc.params?.protocolVersion || "2025-03-26",
+      capabilities: { tools: {} },
+      serverInfo: { name: "manumit-mcp", version: "1.1.0" },
+      instructions: "Manage Split Task tasks, calendar events, notes, and categories. Ask confirmation before calling read_notes.",
+    });
+  }
+
+  if (rpc.method === "ping") {
+    return rpcOk({});
+  }
+
+  if (rpc.method === "tools/list") {
+    return rpcOk({ tools: MCP_TOOLS });
+  }
+
+  if (rpc.method === "tools/call") {
+    const toolName = rpc.params?.name;
+    const toolDef = MCP_TOOLS.find((t) => t.name === toolName);
+    if (!toolDef) {
+      return rpcErr(-32601, `Unknown tool: ${toolName}`);
+    }
+    try {
+      const result = await executeMcpTool(toolName, rpc.params?.arguments || {}, env, mcpAuth);
+      return rpcOk({
+        content: [{ type: "text", text: JSON.stringify(result) }],
+      });
+    } catch (err) {
+      return rpcOk({
+        isError: true,
+        content: [{ type: "text", text: String(err?.message || err) }],
+      });
+    }
+  }
+
+  return rpcErr(-32601, `Method not found: ${rpc.method}`);
+}
+
 export default {
   async fetch(request, env, ctx) {
-    // Allowlisted CORS: sync clients are manumit.studio (+ app origins);
-    // wildcard * would let any site drive credentialed sync endpoints.
     const origin = request.headers.get('origin') || '';
     const ALLOWED_ORIGINS = [
       'https://manumit.studio',
@@ -628,22 +1614,17 @@ export default {
       'capacitor://localhost',
       'ionic://localhost',
       'http://localhost',
-      'https://localhost', // Capacitor Android (server.androidScheme: https)
+      'https://localhost',
     ];
-    // Native shells / local dev have no real host: match localhost on either
-    // scheme, any port (Vite :5173, Capacitor https://localhost). Exact host
-    // only — a startsWith check would also admit localhost.evil.com.
     const isLocalOrigin = /^https?:\/\/localhost(:\d+)?$/.test(origin);
-    // Cloudflare Pages preview deployments get unique subdomains (e.g.
-    // f81cb833.freeerapps.pages.dev) — allow all of them.
     const isPagesPreview = /^https:\/\/[a-z0-9-]+\.freeerapps\.pages\.dev$/.test(origin);
     const allowOrigin = (ALLOWED_ORIGINS.includes(origin) || isLocalOrigin || isPagesPreview)
       ? origin : ALLOWED_ORIGINS[0];
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, If-None-Match',
-      'Access-Control-Expose-Headers': 'ETag',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, If-None-Match, Mcp-Session-Id',
+      'Access-Control-Expose-Headers': 'ETag, Mcp-Session-Id',
     };
 
     if (request.method === 'OPTIONS') {
@@ -661,113 +1642,28 @@ export default {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
-          // Per-user payloads are never cacheable (browser/CDN/proxy) — one
-          // user's snapshot must never serve another. Freshness lives in the
-          // client's no-store + version conditional pull, not HTTP caches.
           'Cache-Control': 'no-store',
         },
       });
 
-    // ─── MCP server (/mcp) ───────────────────────────────────────────────
-    // Zero-dependency Streamable-HTTP MCP server (JSON-RPC 2.0).
-    // Works directly in Cloudflare Dashboard Quick Edit without npm bundling.
+    // ─── MCP & OAuth 2.1 Routes ──────────────────────────────────────────
     if (url.pathname === "/mcp" || url.pathname.startsWith("/mcp/")) {
-      if (!(await verifyMcpAuth(request, env))) {
-        return jsonResponse({ error: "Unauthorized" }, 401);
-      }
-      if (request.method === "GET") {
-        return new Response(null, { status: 405, headers: corsHeaders });
-      }
-      if (request.method !== "POST") {
-        return jsonResponse({ error: "Method not allowed" }, 405);
-      }
-
-      let rpc;
-      try {
-        rpc = await request.json();
-      } catch {
-        return jsonResponse({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
-      }
-
-      // Notifications (no id) get 202 Accepted with empty body per MCP spec
-      if (rpc.id === undefined || rpc.id === null) {
-        return new Response(null, { status: 202, headers: corsHeaders });
-      }
-
-      const rpcOk = (result) => jsonResponse({ jsonrpc: "2.0", id: rpc.id, result });
-      const rpcErr = (code, message) => jsonResponse({ jsonrpc: "2.0", id: rpc.id, error: { code, message } });
-
-      if (rpc.method === "initialize") {
-        return rpcOk({
-          protocolVersion: rpc.params?.protocolVersion || "2025-03-26",
-          capabilities: { tools: {} },
-          serverInfo: { name: "manumit-mcp", version: "1.0.0" },
-        });
-      }
-
-      if (rpc.method === "ping") {
-        return rpcOk({});
-      }
-
-      if (rpc.method === "tools/list") {
-        return rpcOk({
-          tools: [
-            {
-              name: "add_upcoming_opportunity",
-              description: "Add an upcoming opportunity, hackathon, or application deadline to Split Task.",
-              inputSchema: {
-                type: "object",
-                properties: {
-                  title: { type: "string", description: "Title of the hackathon, program, or opportunity" },
-                  date: { type: "string", description: "Target or deadline date in YYYY-MM-DD format" },
-                  url: { type: "string", description: "Link to the opportunity" },
-                  notes: { type: "string", description: "Details, eligibility, or description" },
-                  username: { type: "string", description: "Optional target username (defaults to DEFAULT_TARGET_USERNAME)" },
-                },
-                required: ["title"],
-              },
-            },
-          ],
-        });
-      }
-
-      if (rpc.method === "tools/call") {
-        if (rpc.params?.name !== "add_upcoming_opportunity") {
-          return rpcErr(-32601, `Unknown tool: ${rpc.params?.name}`);
-        }
-        try {
-          const result = await createTaskFromAgent(env, rpc.params?.arguments || {});
-          return rpcOk({
-            content: [{ type: "text", text: JSON.stringify(result) }],
-          });
-        } catch (err) {
-          return rpcOk({
-            isError: true,
-            content: [{ type: "text", text: String(err?.message || err) }],
-          });
-        }
-      }
-
-      return rpcErr(-32601, `Method not found: ${rpc.method}`);
+      return handleMcpRequest(request, env, corsHeaders, jsonResponse);
     }
 
-    // ─── Agent ingestion REST endpoint (/api/agent/ingest) ───────────────
-    // Direct REST ingest for agents that don't speak MCP. Same MCP_API_KEY
-    // guard. Accepts a single item object or an array.
     if (url.pathname === "/api/agent/ingest" && request.method === "POST") {
-      if (!(await verifyMcpAuth(request, env)))
+      if (!(await verifyMcpAuth(request, env)).ok)
         return jsonResponse({ error: "Unauthorized" }, 401);
       return handleAgentIngest(request, env, jsonResponse);
     }
 
+    if (url.pathname.startsWith("/.well-known/oauth-") ||
+        url.pathname === "/.well-known/openid-configuration" ||
+        url.pathname.startsWith("/oauth/")) {
+      return handleOAuthRequest(request, env, url, corsHeaders, jsonResponse);
+    }
+
     // ─── GET /api/status ─────────────────────────────────────────────────
-    // Self-check uptime: ticks an hourly heartbeat bucket (this request is
-    // the ping — if the worker answers, it was up this hour), then reports
-    // { status:'operational', uptimePct, samples, windowMin } from D1.
-    // Window reads are cached in-isolate (TTL below): buckets only change
-    // hourly, so recomputing 3 windows per request just burns D1 rows.
-    // Default = 24h only (was: 24h+7d+30d ≈ 12 reads/request). Pass
-    // ?windows=7d,30d for the full set (admin/range buttons).
     if (url.pathname === '/api/status' && request.method === 'GET') {
       const db = env['ST-DATABASE'];
       const region = visitorRegion(request.cf);
@@ -782,16 +1678,6 @@ export default {
         if (statusCache.body && (nowMs - statusCache.at) < STATUS_CACHE_TTL_MS) {
           return jsonResponse({ ...statusCache.body, ...geo, t: nowMs, cached: true });
         }
-        // One small window per request would take months to fill 30d on a
-        // quiet site; instead compute every window now (all share the same
-        // buckets, so extra reads are cheap IN-lookups, no extra writes).
-        // qualifyWindow gates each window on ITS OWN coverage — the old
-        // "last 15 minutes look continuous" check was satisfied by any
-        // active visitor (including this page's 60s refresh) and then let
-        // diluted whole-day numbers through.
-        //
-        // Slim default: 24h only (≈4 reads). ?windows=7d,30d opts into the
-        // full set — saves ~70% status reads on the homepage's hourly ping.
         const wantParam = (url.searchParams.get('windows') || '').toLowerCase();
         const want = new Set(
           wantParam.split(',').map(s => s.trim()).filter(s => UPTIME_WINDOWS[s])
@@ -802,7 +1688,6 @@ export default {
           if (!want.has(name)) continue;
           windows[name] = qualifyWindow(await readUptime(db, hours));
         }
-        // Backfill the legacy shape: uptimePct always reflects 24h.
         if (!windows['24h']) windows['24h'] = qualifyWindow(await readUptime(db, 24));
         const body = { status: 'operational', uptimePct: windows['24h'].pct, windows };
         statusCache = { body, at: nowMs };
@@ -812,11 +1697,6 @@ export default {
       }
     }
 
-    // Heartbeat tick: cron + /api/status only. Every-/api/*-request ticks
-    // added one write per request for zero coverage gain once buckets went
-    // hourly — the hourly cron already covers quiet hours.
-
-    // DEBUG: visible bindings. Disabled in production: leaks binding names.
     if (url.pathname === '/api/debug') {
       if (env.ENVIRONMENT === 'production')
         return jsonResponse({ error: 'Not found' }, 404);
@@ -834,9 +1714,6 @@ export default {
         if (!username || !password_hash) {
           return jsonResponse({ error: 'Valid username + password hash required' }, 400);
         }
-        // Pre-check keeps the raw D1 unique error off the client; the catch
-        // covers two simultaneous signups for the same name.
-        // Case-insensitive: Cedric can't register if cedric exists.
         const taken = () => jsonResponse({ error: 'That username is already taken. Please choose another one.' }, 409);
         const existing = await findUser(env['ST-DATABASE'], username);
         if (existing) return taken();
@@ -874,14 +1751,10 @@ export default {
       }
 
       // ─── POST /api/admin/login ─────────────────────────────────────────
-      // Dashboard login: client sends SHA-256(password_hash); compared to the
-      // secret so plaintext never appears in source. Set ADMIN_PASSWORD_HASH
-      // as a Worker secret; the in-source value below is a dev fallback only.
       if (url.pathname === '/api/admin/login' && request.method === 'POST') {
         const loginDb = env['ST-DATABASE'];
         const ADMIN_USERNAME = 'Admin';
         const ADMIN_PASSWORD_HASH = env.ADMIN_PASSWORD_HASH || '0618b1322273460801603e546d012d7d912f80ad71cbfbc08a73e2cce02b2ffb';
-        // SHA-256 of the configured admin password.
         const ip = request.headers.get('cf-connecting-ip') || 'ip';
         const rl = await checkRateLimit(loginDb, `admin-login:${ip}`, 10, 600000);
         if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
@@ -916,8 +1789,6 @@ export default {
       }
 
       // ─── POST /api/account/username ─────────────────────────────────────
-      // Rename the shared login identity without changing its stable user ID,
-      // which keeps all product data and memberships attached to the account.
       if (url.pathname === '/api/account/username' && request.method === 'POST') {
         const accountDb = env['ST-DATABASE'];
         const ip = request.headers.get('cf-connecting-ip') || 'ip';
@@ -1010,7 +1881,6 @@ export default {
       }
 
       // ─── POST /api/delete-product-data ──────────────────────────────────
-      // Remove one product's cloud data without deleting the Manumit account.
       if (url.pathname === '/api/delete-product-data' && request.method === 'POST') {
         const delDb = env['ST-DATABASE'];
         let rawDel;
@@ -1063,7 +1933,6 @@ export default {
           return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
         }
 
-        // 1. Verify credentials first
         if (!(await checkUserPassword(delDb, username, password_hash))) {
           return jsonResponse({ error: 'Unauthorized request or invalid credentials' }, 401);
         }
@@ -1162,111 +2031,90 @@ export default {
       }
 
       // ─── GET /api/sync ──────────────────────────────────────────────────
-      // Whole-route guard: any unexpected throw becomes a 400 with a message,
-      // never an opaque 500 (see POST /api/sync note).
       if (url.pathname === '/api/sync' && request.method === 'GET') {
         try {
-        const syncDb = env['ST-DATABASE'];
-        const username = normUsername(url.searchParams.get('username'));
-        if (!username) return jsonResponse({ error: 'Missing username parameter' }, 400);
-        const password_hash = normHash(
-          url.searchParams.get('password_hash') || url.searchParams.get('passwordHash')
-        );
-        if (!password_hash) {
-          return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
-        }
-        const account = await findUser(syncDb, username);
-        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
-          return jsonResponse({ error: 'Invalid credentials' }, 401);
-        }
-        const userId = account.user_id;
-        await ensureNotesOrderColumn(syncDb);
-
-        // Lazy daily sweep; guarded so it can never break/slow the sync.
-        // Throttled: the hourly cron owns the sweep (was: claim-write EVERY poll).
-        if (Date.now() - lastSweepAttempt > SWEEP_THROTTLE_MS) {
-          lastSweepAttempt = Date.now();
-          try { await runDailySweep(env); } catch (err) { console.error('[sweep] lazy sweep failed:', err); }
-        }
-
-        // Conditional pull: client sends its version; a match answers
-        // { unchanged:true } (two point lookups, zero row reads).
-        // Never cache per-user snapshots in a shared cache (edge/CDN/KV) —
-        // the version counter above already IS the cache.
-        const clientVersion = url.searchParams.get('version');
-        let serverVersion = null;
-        try {
-          const row = await syncDb
-            .prepare('SELECT version FROM split_task_sync_versions WHERE user_id = ?')
-            .bind(userId).first();
-          if (row) serverVersion = Number(row.version) || 0;
-        } catch { serverVersion = null; }
-
-        if (clientVersion !== null && clientVersion !== '' && serverVersion !== null
-            && Number(clientVersion) === serverVersion) {
-          // ETag/304: same bytes, zero egress/CPU to serialize. Client keeps
-          // treating this exactly like { unchanged:true }.
-          const etag = `W/"v${serverVersion}"`;
-          if (request.headers.get('if-none-match') === etag) {
-            return new Response(null, { status: 304, headers: { 'ETag': etag, ...corsHeaders } });
+          const syncDb = env['ST-DATABASE'];
+          const username = normUsername(url.searchParams.get('username'));
+          if (!username) return jsonResponse({ error: 'Missing username parameter' }, 400);
+          const password_hash = normHash(
+            url.searchParams.get('password_hash') || url.searchParams.get('passwordHash')
+          );
+          if (!password_hash) {
+            return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
           }
-          const unchangedBody = JSON.stringify({ unchanged: true, version: serverVersion });
-          return new Response(unchangedBody, {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'ETag': etag, ...corsHeaders },
-          });
-        }
+          const account = await findUser(syncDb, username);
+          if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+            return jsonResponse({ error: 'Invalid credentials' }, 401);
+          }
+          const userId = account.user_id;
+          await ensureNotesOrderColumn(syncDb);
 
-        // One batch round-trip instead of 4 concurrent reads: same rows, fewer
-        // round-trips. Per-result errors degrade per-table (empty for THAT
-        // table only) — the client merge treats each table independently, so a
-        // failed table never clobbers the tables that did read.
-        const stmts = [
-          syncDb.prepare('SELECT * FROM split_task_settings WHERE user_id = ?').bind(userId),
-          syncDb.prepare('SELECT * FROM split_task_categories WHERE user_id = ?').bind(userId),
-          syncDb.prepare('SELECT * FROM split_task_items WHERE user_id = ?').bind(userId),
-          syncDb.prepare('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC').bind(userId),
-        ];
-        let settings = null, categories = [], items = [], notes = [];
-        try {
-          // db.batch() resolves to plain result objects (NOT statement
-          // handles): read .results / .results[0] directly. Calling
-          // .first()/.all() on them throws — which is exactly the "0 items
-          // but rows exist" outage (each per-table catch swallowed to empty).
-          const [sRes, cRes, iRes, nRes] = await syncDb.batch(stmts);
-          try { settings = (sRes?.results?.[0]) || null; }
-          catch (err) { console.warn('[sync] settings read failed, defaulting null:', err?.message || err); }
-          try { categories = cRes?.results || []; }
-          catch (err) { console.warn('[sync] categories read failed, defaulting empty:', err?.message || err); }
-          try { items = iRes?.results || []; }
-          catch (err) { console.warn('[sync] items read failed, defaulting empty:', err?.message || err); }
-          try { notes = nRes?.results || []; }
-          catch (err) { console.warn('[sync] notes read failed, defaulting empty:', err?.message || err); }
-        } catch (err) {
-          // Whole batch rejected (missing table pre-migration, transient D1
-          // error): fall back to per-table reads so one bad table can't fail
-          // the whole sync with a 500.
-          console.warn('[sync] batched pull fell back:', err?.message || err);
-          const readRows = async (sql) => {
-            try { return (await syncDb.prepare(sql).bind(userId).all()).results || []; }
-            catch (e) { console.warn('[sync] table read failed, defaulting empty:', sql, e?.message || e); return []; }
-          };
-          const readOne = async (sql) => {
-            try { return (await syncDb.prepare(sql).bind(userId).first()) || null; }
-            catch (e) { console.warn('[sync] settings read failed, defaulting null:', e?.message || e); return null; }
-          };
-          settings = await readOne('SELECT * FROM split_task_settings WHERE user_id = ?');
-          categories = await readRows('SELECT * FROM split_task_categories WHERE user_id = ?');
-          items = await readRows('SELECT * FROM split_task_items WHERE user_id = ?');
-          notes = await readRows('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC');
-        }
-        return jsonResponse({
-          settings,
-          categories,
-          items,
-          notes,
-          version: serverVersion,
-        });
+          if (Date.now() - lastSweepAttempt > SWEEP_THROTTLE_MS) {
+            lastSweepAttempt = Date.now();
+            try { await runDailySweep(env); } catch (err) { console.error('[sweep] lazy sweep failed:', err); }
+          }
+
+          const clientVersion = url.searchParams.get('version');
+          let serverVersion = null;
+          try {
+            const row = await syncDb
+              .prepare('SELECT version FROM split_task_sync_versions WHERE user_id = ?')
+              .bind(userId).first();
+            if (row) serverVersion = Number(row.version) || 0;
+          } catch { serverVersion = null; }
+
+          if (clientVersion !== null && clientVersion !== '' && serverVersion !== null
+              && Number(clientVersion) === serverVersion) {
+            const etag = `W/"v${serverVersion}"`;
+            if (request.headers.get('if-none-match') === etag) {
+              return new Response(null, { status: 304, headers: { 'ETag': etag, ...corsHeaders } });
+            }
+            const unchangedBody = JSON.stringify({ unchanged: true, version: serverVersion });
+            return new Response(unchangedBody, {
+              status: 200,
+              headers: { 'Content-Type': 'application/json', 'ETag': etag, ...corsHeaders },
+            });
+          }
+
+          const stmts = [
+            syncDb.prepare('SELECT * FROM split_task_settings WHERE user_id = ?').bind(userId),
+            syncDb.prepare('SELECT * FROM split_task_categories WHERE user_id = ?').bind(userId),
+            syncDb.prepare('SELECT * FROM split_task_items WHERE user_id = ?').bind(userId),
+            syncDb.prepare('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC').bind(userId),
+          ];
+          let settings = null, categories = [], items = [], notes = [];
+          try {
+            const [sRes, cRes, iRes, nRes] = await syncDb.batch(stmts);
+            try { settings = (sRes?.results?.[0]) || null; }
+            catch (err) { console.warn('[sync] settings read failed, defaulting null:', err?.message || err); }
+            try { categories = cRes?.results || []; }
+            catch (err) { console.warn('[sync] categories read failed, defaulting empty:', err?.message || err); }
+            try { items = iRes?.results || []; }
+            catch (err) { console.warn('[sync] items read failed, defaulting empty:', err?.message || err); }
+            try { notes = nRes?.results || []; }
+            catch (err) { console.warn('[sync] notes read failed, defaulting empty:', err?.message || err); }
+          } catch (err) {
+            console.warn('[sync] batched pull fell back:', err?.message || err);
+            const readRows = async (sql) => {
+              try { return (await syncDb.prepare(sql).bind(userId).all()).results || []; }
+              catch (e) { console.warn('[sync] table read failed, defaulting empty:', sql, e?.message || e); return []; }
+            };
+            const readOne = async (sql) => {
+              try { return (await syncDb.prepare(sql).bind(userId).first()) || null; }
+              catch (e) { console.warn('[sync] settings read failed, defaulting null:', e?.message || e); return null; }
+            };
+            settings = await readOne('SELECT * FROM split_task_settings WHERE user_id = ?');
+            categories = await readRows('SELECT * FROM split_task_categories WHERE user_id = ?');
+            items = await readRows('SELECT * FROM split_task_items WHERE user_id = ?');
+            notes = await readRows('SELECT * FROM split_task_notes WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC, id ASC');
+          }
+          return jsonResponse({
+            settings,
+            categories,
+            items,
+            notes,
+            version: serverVersion,
+          });
         } catch (err) {
           console.error('[sync] pull failed:', err?.stack || err?.message || err);
           return jsonResponse({ error: 'Sync pull failed: ' + (err?.message || 'unknown') }, 400);
@@ -1274,289 +2122,268 @@ export default {
       }
 
       // ─── POST /api/sync ─────────────────────────────────────────────────
-      // NOTE: the ENTIRE body is wrapped in try/catch → 500s become 400s with
-      // a message. An uncaught throw here is what strands clients in
-      // "Waiting to sync" with an opaque 500 and endless retries.
       if (url.pathname === '/api/sync' && request.method === 'POST') {
         try {
-        const pushDb = env['ST-DATABASE'];
-        // Body cap: never JSON-parse an unbounded push in an isolate.
-        const len = Number(request.headers.get('content-length') || 0);
-        if (len > 1048576) return jsonResponse({ error: 'Payload too large' }, 413);
-        let body;
-        try {
-          body = await request.json();
-        } catch (err) {
-          return jsonResponse({ error: 'Invalid JSON body' }, 400);
-        }
-        // Per-user rate limit (~30 pushes/min): fail-open so traffic never breaks.
-        const rlKey = `sync:${normUsername(body?.username) || 'anon'}:${request.headers.get('cf-connecting-ip') || 'ip'}`;
-        const rl = await checkRateLimit(pushDb, rlKey, 30, 60000);
-        if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
-        const username = normUsername(body?.username);
-        const password_hash = normHash(body?.password_hash || body?.passwordHash);
-        const { settings, categories, items, notes } = body || {};
-        if (!username) return jsonResponse({ error: 'Missing username' }, 400);
-        if (!password_hash) return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
-        const account = await findUser(pushDb, username);
-        if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
-          return jsonResponse({ error: 'Invalid credentials' }, 401);
-        }
-        const userId = account.user_id;
-        await ensureNotesOrderColumn(pushDb);
-        // Per-user quotas: one abusive account can't fill the 500MB D1.
-        if (Array.isArray(items) && items.length > 2000)
-          return jsonResponse({ error: 'Too many items (max 2000)' }, 413);
-        if (Array.isArray(notes) && notes.length > 500)
-          return jsonResponse({ error: 'Too many notes (max 500)' }, 413);
-        if (Array.isArray(categories) && categories.length > 200)
-          return jsonResponse({ error: 'Too many categories (max 200)' }, 413);
-        if (Array.isArray(notes)) {
-          for (const n of notes) {
-            if (n && typeof n.text === 'string' && n.text.length > 20000)
-              return jsonResponse({ error: 'Note too large (max 20k chars)' }, 413);
-          }
-        }
-        if (Array.isArray(items)) {
-          for (const it of items) {
-            if (it && typeof it.title === 'string' && it.title.length > 500)
-              return jsonResponse({ error: 'Item title too long (max 500)' }, 413);
-          }
-        }
-        // 0/1 normalizer: absent → 1 (feature on), explicit false/0 → 0.
-        const bool01 = (v) => (v === false || v === 0 ? 0 : 1);
-
-        if (settings) {
-          // Older clients send no theme_level: derive from the legacy pair so
-          // their dark/light choice survives instead of resetting to dark.
-          const hasThemeLevel = settings.theme_level !== undefined
-            && settings.theme_level !== null && settings.theme_level !== '';
-          const themeLevel = hasThemeLevel
-            ? Math.min(4, Math.max(0, Math.round(Number(settings.theme_level)) || 0))
-            : (settings.is_dim_mode ? 1 : (settings.is_dark_mode ? 0 : 4));
-
-          // app_font allow-list (mirrors fonts.js — keep identical incl. the
-          // 'Default' sentinel). CSS-injected, never raw HTML, but clamped.
-          const APP_FONT_LABELS = [
-            'Default',
-            'Inter', 'System', 'Manrope', 'Roboto', 'Open Sans', 'Poppins', 'Montserrat', 'Lato',
-            'Helvetica', 'Arial', 'Verdana', 'Trebuchet MS', 'Futura',
-            'Georgia', 'Playfair Display', 'Lora', 'Merriweather', 'Baskerville', 'EB Garamond',
-            'Times New Roman', 'Garamond', 'Palatino',
-            'Fira Code', 'JetBrains Mono', 'Space Mono', 'Courier New', 'Mono',
-            'Bebas Neue', 'Pacifico', 'Great Vibes', 'Comic Sans MS',
-          ];
-
-          await env['ST-DATABASE'].prepare(`
-            INSERT INTO split_task_settings (
-              user_id, light_color, dark_color, color_palette, is_dark_mode, is_dim_mode, theme_level,
-              enable_animations, confetti_enabled, completion_sounds,
-              popup_overlay_enabled, page_transitions_enabled, smooth_dropdowns_enabled, deletion_fade_enabled, split_view_shift_enabled, button_feedback_enabled,
-              split_task_page, calendar_days, week_calendar_days, week_start, day_start,
-              day_end, timeline_increment, task_creation_increment, future_recurrences, use_military_time,
-              task_notifications, event_notifications, quick_add_only, split_ratio,
-              delete_after_days, task_deadline_push_enabled, app_font, secure_notes_wrapped_key, updated_at
-            ) VALUES (
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-              ?, ?, ?, ?
-            )
-            ON CONFLICT(user_id) DO UPDATE SET
-              light_color = excluded.light_color,
-              dark_color = excluded.dark_color,
-              color_palette = excluded.color_palette,
-              is_dark_mode = excluded.is_dark_mode,
-              is_dim_mode = excluded.is_dim_mode,
-              theme_level = excluded.theme_level,
-              enable_animations = excluded.enable_animations,
-              confetti_enabled = excluded.confetti_enabled,
-              completion_sounds = excluded.completion_sounds,
-              popup_overlay_enabled = excluded.popup_overlay_enabled,
-              page_transitions_enabled = excluded.page_transitions_enabled,
-              smooth_dropdowns_enabled = excluded.smooth_dropdowns_enabled,
-              deletion_fade_enabled = excluded.deletion_fade_enabled,
-              split_view_shift_enabled = excluded.split_view_shift_enabled,
-              button_feedback_enabled = excluded.button_feedback_enabled,
-              split_task_page = excluded.split_task_page,
-              calendar_days = excluded.calendar_days,
-              week_calendar_days = excluded.week_calendar_days,
-              week_start = excluded.week_start,
-              day_start = excluded.day_start,
-              day_end = excluded.day_end,
-              timeline_increment = excluded.timeline_increment,
-              task_creation_increment = excluded.task_creation_increment,
-              future_recurrences = excluded.future_recurrences,
-              use_military_time = excluded.use_military_time,
-              task_notifications = excluded.task_notifications,
-              event_notifications = excluded.event_notifications,
-              quick_add_only = excluded.quick_add_only,
-              split_ratio = excluded.split_ratio,
-              delete_after_days = excluded.delete_after_days,
-              task_deadline_push_enabled = excluded.task_deadline_push_enabled,
-              app_font = excluded.app_font,
-              secure_notes_wrapped_key = excluded.secure_notes_wrapped_key,
-              updated_at = excluded.updated_at
-          `).bind(
-            userId,
-            settings.light_color || '#344271',
-            // NULL = "use light_color" (schema contract). This used to coerce a
-            // missing dark color to '#999999', which showed up as a grey accent
-            // on every later pull while dark mode was active.
-            settings.dark_color ?? null,
-            typeof settings.color_palette === 'string' ? settings.color_palette : JSON.stringify(settings.color_palette || []),
-            settings.is_dark_mode ? 1 : 0,
-            settings.is_dim_mode === undefined ? 0 : (settings.is_dim_mode ? 1 : 0),
-            themeLevel,
-            settings.enable_animations ? 1 : 0,
-            bool01(settings.confetti_enabled),
-            bool01(settings.completion_sounds),
-            bool01(settings.popup_overlay_enabled),
-            bool01(settings.page_transitions_enabled),
-            bool01(settings.smooth_dropdowns_enabled),
-            bool01(settings.deletion_fade_enabled),
-            bool01(settings.split_view_shift_enabled),
-            bool01(settings.button_feedback_enabled),
-            settings.split_task_page !== 0 ? 1 : 0,
-            [1, 3, 5, 7].includes(Number(settings.calendar_days)) ? Number(settings.calendar_days) : 1,
-            (settings.week_calendar_days === undefined || settings.week_calendar_days === null)
-              ? 7 : Number(settings.week_calendar_days),
-            settings.week_start || 0,
-            settings.day_start || '07:00',
-            settings.day_end || '20:00',
-            settings.timeline_increment || 15,
-            settings.task_creation_increment || 15,
-            Number(settings.future_recurrences) === 1 ? 1 : 2,
-            settings.use_military_time ? 1 : 0,
-            typeof settings.task_notifications === 'string' ? settings.task_notifications : JSON.stringify(settings.task_notifications || []),
-            typeof settings.event_notifications === 'string' ? settings.event_notifications : JSON.stringify(settings.event_notifications || []),
-            settings.quick_add_only ? 1 : 0,
-            settings.split_ratio || 0.5,
-            settings.delete_after_days || 30,
-            bool01(settings.task_deadline_push_enabled),
-            APP_FONT_LABELS.includes(settings.app_font) ? settings.app_font : 'Inter',
-            settings.secure_notes_wrapped_key ?? null,
-            settings.updated_at || new Date().toISOString(),
-          ).run();
-        }
-
-        // Full-set replacement: the pushed list is the source of truth, so
-        // anything absent was deleted on that device. Writes go through
-        // db.batch() (chunked): one round-trip per table instead of N.
-        const CHUNK = 25; // D1 batch-friendly; keeps each batch well under limits
-        const chunked = (stmts) => {
-          const out = [];
-          for (let i = 0; i < stmts.length; i += CHUNK) out.push(stmts.slice(i, i + CHUNK));
-          return out;
-        };
-        if (Array.isArray(categories)) {
-          const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM split_task_categories WHERE user_id = ?').bind(userId),
-          ];
-          const nowIso = new Date().toISOString();
-          for (const cat of categories) {
-            stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO split_task_categories (id, user_id, name, color, updated_at)
-              VALUES (?, ?, ?, ?, ?)
-              ON CONFLICT(user_id, id) DO UPDATE SET
-                name = excluded.name,
-                color = excluded.color,
-                updated_at = excluded.updated_at
-            `).bind(cat.id, userId, cat.name, cat.color, cat.updated_at || nowIso));
-          }
-          for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
-        }
-
-        if (Array.isArray(items)) {
-          const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM split_task_items WHERE user_id = ?').bind(userId),
-          ];
-          const nowIso = new Date().toISOString();
-          for (const item of items) {
-            stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO split_task_items (
-                id, user_id, type, title, category_id, item_date, done, finished_at, notes,
-                deadline, due_date, start_time, end_time, location, recurrence, recurrence_id, updated_at
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(user_id, id) DO UPDATE SET
-                type = excluded.type,
-                title = excluded.title,
-                category_id = excluded.category_id,
-                item_date = excluded.item_date,
-                done = excluded.done,
-                finished_at = excluded.finished_at,
-                notes = excluded.notes,
-                deadline = excluded.deadline,
-                due_date = excluded.due_date,
-                start_time = excluded.start_time,
-                end_time = excluded.end_time,
-                location = excluded.location,
-                recurrence = excluded.recurrence,
-                recurrence_id = excluded.recurrence_id,
-                updated_at = excluded.updated_at
-            `).bind(
-              item.id, userId, item.type || 'task', item.title,
-              item.category_id || 'default', item.item_date,
-              item.done ? 1 : 0, item.finished_at || null, item.notes || null,
-              item.deadline || null, item.due_date || null, item.start_time || null,
-              item.end_time || null, item.location || null,
-              typeof item.recurrence === 'string' ? item.recurrence : JSON.stringify(item.recurrence || {}),
-              item.recurrence_id || null,
-              item.updated_at || nowIso,
-            ));
-          }
-          for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
-        }
-
-        if (Array.isArray(notes)) {
-          const stmts = [
-            env['ST-DATABASE'].prepare('DELETE FROM split_task_notes WHERE user_id = ?').bind(userId),
-          ];
-          const nowIso = new Date().toISOString();
-          for (const [noteIndex, note] of notes.entries()) {
-            if (!note || typeof note.id === 'undefined' || note.id === null) continue;
-            stmts.push(env['ST-DATABASE'].prepare(`
-              INSERT INTO split_task_notes (
-                id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted, sort_order
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(user_id, id) DO UPDATE SET
-                text = excluded.text,
-                category_id = excluded.category_id,
-                created_at = excluded.created_at,
-                updated_at = excluded.updated_at,
-                hidden = excluded.hidden,
-                text_is_encrypted = excluded.text_is_encrypted,
-                sort_order = excluded.sort_order
-            `).bind(
-              String(note.id), userId, String(note.text ?? ''),
-              note.category_id ?? null,
-              note.created_at || nowIso,
-              note.updated_at || nowIso,
-              note.hidden === 1 || note.hidden === '1' ? 1 : 0,
-              note.text_is_encrypted === 1 || note.text_is_encrypted === '1' ? 1 : 0,
-              Number.isInteger(note.sort_order) ? note.sort_order : noteIndex,
-            ));
-          }
-          for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
-        }
-
-        // Bump the counter LAST (after rows land) so other devices re-fetch. A
-        // missing table only costs full snapshots — never fail the push.
-        if (settings || Array.isArray(categories) || Array.isArray(items) || Array.isArray(notes)) {
+          const pushDb = env['ST-DATABASE'];
+          const len = Number(request.headers.get('content-length') || 0);
+          if (len > 1048576) return jsonResponse({ error: 'Payload too large' }, 413);
+          let body;
           try {
-            await env['ST-DATABASE'].prepare(`
-              INSERT INTO split_task_sync_versions (user_id, version) VALUES (?, 1)
-              ON CONFLICT(user_id) DO UPDATE SET version = version + 1
-            `).bind(userId).run();
+            body = await request.json();
           } catch (err) {
-            console.warn('[sync] version bump skipped:', err?.message || err);
+            return jsonResponse({ error: 'Invalid JSON body' }, 400);
           }
-        }
+          const rlKey = `sync:${normUsername(body?.username) || 'anon'}:${request.headers.get('cf-connecting-ip') || 'ip'}`;
+          const rl = await checkRateLimit(pushDb, rlKey, 30, 60000);
+          if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
+          const username = normUsername(body?.username);
+          const password_hash = normHash(body?.password_hash || body?.passwordHash);
+          const { settings, categories, items, notes } = body || {};
+          if (!username) return jsonResponse({ error: 'Missing username' }, 400);
+          if (!password_hash) return jsonResponse({ error: 'password_hash is required (please update the app)' }, 401);
+          const account = await findUser(pushDb, username);
+          if (!account || !timingSafeEqual(account.password_hash, password_hash)) {
+            return jsonResponse({ error: 'Invalid credentials' }, 401);
+          }
+          const userId = account.user_id;
+          await ensureNotesOrderColumn(pushDb);
+          if (Array.isArray(items) && items.length > 2000)
+            return jsonResponse({ error: 'Too many items (max 2000)' }, 413);
+          if (Array.isArray(notes) && notes.length > 500)
+            return jsonResponse({ error: 'Too many notes (max 500)' }, 413);
+          if (Array.isArray(categories) && categories.length > 200)
+            return jsonResponse({ error: 'Too many categories (max 200)' }, 413);
+          if (Array.isArray(notes)) {
+            for (const n of notes) {
+              if (n && typeof n.text === 'string' && n.text.length > 20000)
+                return jsonResponse({ error: 'Note too large (max 20k chars)' }, 413);
+            }
+          }
+          if (Array.isArray(items)) {
+            for (const it of items) {
+              if (it && typeof it.title === 'string' && it.title.length > 500)
+                return jsonResponse({ error: 'Item title too long (max 500)' }, 413);
+            }
+          }
+          const bool01 = (v) => (v === false || v === 0 ? 0 : 1);
 
-        return jsonResponse({ success: true, message: 'Sync complete' });
+          if (settings) {
+            const hasThemeLevel = settings.theme_level !== undefined
+              && settings.theme_level !== null && settings.theme_level !== '';
+            const themeLevel = hasThemeLevel
+              ? Math.min(4, Math.max(0, Math.round(Number(settings.theme_level)) || 0))
+              : (settings.is_dim_mode ? 1 : (settings.is_dark_mode ? 0 : 4));
+
+            const APP_FONT_LABELS = [
+              'Default',
+              'Inter', 'System', 'Manrope', 'Roboto', 'Open Sans', 'Poppins', 'Montserrat', 'Lato',
+              'Helvetica', 'Arial', 'Verdana', 'Trebuchet MS', 'Futura',
+              'Georgia', 'Playfair Display', 'Lora', 'Merriweather', 'Baskerville', 'EB Garamond',
+              'Times New Roman', 'Garamond', 'Palatino',
+              'Fira Code', 'JetBrains Mono', 'Space Mono', 'Courier New', 'Mono',
+              'Bebas Neue', 'Pacifico', 'Great Vibes', 'Comic Sans MS',
+            ];
+
+            await env['ST-DATABASE'].prepare(`
+              INSERT INTO split_task_settings (
+                user_id, light_color, dark_color, color_palette, is_dark_mode, is_dim_mode, theme_level,
+                enable_animations, confetti_enabled, completion_sounds,
+                popup_overlay_enabled, page_transitions_enabled, smooth_dropdowns_enabled, deletion_fade_enabled, split_view_shift_enabled, button_feedback_enabled,
+                split_task_page, calendar_days, week_calendar_days, week_start, day_start,
+                day_end, timeline_increment, task_creation_increment, future_recurrences, use_military_time,
+                task_notifications, event_notifications, quick_add_only, split_ratio,
+                delete_after_days, task_deadline_push_enabled, app_font, secure_notes_wrapped_key, updated_at
+              ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?
+              )
+              ON CONFLICT(user_id) DO UPDATE SET
+                light_color = excluded.light_color,
+                dark_color = excluded.dark_color,
+                color_palette = excluded.color_palette,
+                is_dark_mode = excluded.is_dark_mode,
+                is_dim_mode = excluded.is_dim_mode,
+                theme_level = excluded.theme_level,
+                enable_animations = excluded.enable_animations,
+                confetti_enabled = excluded.confetti_enabled,
+                completion_sounds = excluded.completion_sounds,
+                popup_overlay_enabled = excluded.popup_overlay_enabled,
+                page_transitions_enabled = excluded.page_transitions_enabled,
+                smooth_dropdowns_enabled = excluded.smooth_dropdowns_enabled,
+                deletion_fade_enabled = excluded.deletion_fade_enabled,
+                split_view_shift_enabled = excluded.split_view_shift_enabled,
+                button_feedback_enabled = excluded.button_feedback_enabled,
+                split_task_page = excluded.split_task_page,
+                calendar_days = excluded.calendar_days,
+                week_calendar_days = excluded.week_calendar_days,
+                week_start = excluded.week_start,
+                day_start = excluded.day_start,
+                day_end = excluded.day_end,
+                timeline_increment = excluded.timeline_increment,
+                task_creation_increment = excluded.task_creation_increment,
+                future_recurrences = excluded.future_recurrences,
+                use_military_time = excluded.use_military_time,
+                task_notifications = excluded.task_notifications,
+                event_notifications = excluded.event_notifications,
+                quick_add_only = excluded.quick_add_only,
+                split_ratio = excluded.split_ratio,
+                delete_after_days = excluded.delete_after_days,
+                task_deadline_push_enabled = excluded.task_deadline_push_enabled,
+                app_font = excluded.app_font,
+                secure_notes_wrapped_key = excluded.secure_notes_wrapped_key,
+                updated_at = excluded.updated_at
+            `).bind(
+              userId,
+              settings.light_color || '#344271',
+              settings.dark_color ?? null,
+              typeof settings.color_palette === 'string' ? settings.color_palette : JSON.stringify(settings.color_palette || []),
+              settings.is_dark_mode ? 1 : 0,
+              settings.is_dim_mode === undefined ? 0 : (settings.is_dim_mode ? 1 : 0),
+              themeLevel,
+              settings.enable_animations ? 1 : 0,
+              bool01(settings.confetti_enabled),
+              bool01(settings.completion_sounds),
+              bool01(settings.popup_overlay_enabled),
+              bool01(settings.page_transitions_enabled),
+              bool01(settings.smooth_dropdowns_enabled),
+              bool01(settings.deletion_fade_enabled),
+              bool01(settings.split_view_shift_enabled),
+              bool01(settings.button_feedback_enabled),
+              settings.split_task_page !== 0 ? 1 : 0,
+              [1, 3, 5, 7].includes(Number(settings.calendar_days)) ? Number(settings.calendar_days) : 1,
+              (settings.week_calendar_days === undefined || settings.week_calendar_days === null)
+                ? 7 : Number(settings.week_calendar_days),
+              settings.week_start || 0,
+              settings.day_start || '07:00',
+              settings.day_end || '20:00',
+              settings.timeline_increment || 15,
+              settings.task_creation_increment || 15,
+              Number(settings.future_recurrences) === 1 ? 1 : 2,
+              settings.use_military_time ? 1 : 0,
+              typeof settings.task_notifications === 'string' ? settings.task_notifications : JSON.stringify(settings.task_notifications || []),
+              typeof settings.event_notifications === 'string' ? settings.event_notifications : JSON.stringify(settings.event_notifications || []),
+              settings.quick_add_only ? 1 : 0,
+              settings.split_ratio || 0.5,
+              settings.delete_after_days || 30,
+              bool01(settings.task_deadline_push_enabled),
+              APP_FONT_LABELS.includes(settings.app_font) ? settings.app_font : 'Inter',
+              settings.secure_notes_wrapped_key ?? null,
+              settings.updated_at || new Date().toISOString(),
+            ).run();
+          }
+
+          const CHUNK = 25;
+          const chunked = (stmts) => {
+            const out = [];
+            for (let i = 0; i < stmts.length; i += CHUNK) out.push(stmts.slice(i, i + CHUNK));
+            return out;
+          };
+          if (Array.isArray(categories)) {
+            const stmts = [
+              env['ST-DATABASE'].prepare('DELETE FROM split_task_categories WHERE user_id = ?').bind(userId),
+            ];
+            const nowIso = new Date().toISOString();
+            for (const cat of categories) {
+              stmts.push(env['ST-DATABASE'].prepare(`
+                INSERT INTO split_task_categories (id, user_id, name, color, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, id) DO UPDATE SET
+                  name = excluded.name,
+                  color = excluded.color,
+                  updated_at = excluded.updated_at
+              `).bind(cat.id, userId, cat.name, cat.color, cat.updated_at || nowIso));
+            }
+            for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
+          }
+
+          if (Array.isArray(items)) {
+            const stmts = [
+              env['ST-DATABASE'].prepare('DELETE FROM split_task_items WHERE user_id = ?').bind(userId),
+            ];
+            const nowIso = new Date().toISOString();
+            for (const item of items) {
+              stmts.push(env['ST-DATABASE'].prepare(`
+                INSERT INTO split_task_items (
+                  id, user_id, type, title, category_id, item_date, done, finished_at, notes,
+                  deadline, due_date, start_time, end_time, location, recurrence, recurrence_id, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, id) DO UPDATE SET
+                  type = excluded.type,
+                  title = excluded.title,
+                  category_id = excluded.category_id,
+                  item_date = excluded.item_date,
+                  done = excluded.done,
+                  finished_at = excluded.finished_at,
+                  notes = excluded.notes,
+                  deadline = excluded.deadline,
+                  due_date = excluded.due_date,
+                  start_time = excluded.start_time,
+                  end_time = excluded.end_time,
+                  location = excluded.location,
+                  recurrence = excluded.recurrence,
+                  recurrence_id = excluded.recurrence_id,
+                  updated_at = excluded.updated_at
+              `).bind(
+                item.id, userId, item.type || 'task', item.title,
+                item.category_id || 'default', item.item_date,
+                item.done ? 1 : 0, item.finished_at || null, item.notes || null,
+                item.deadline || null, item.due_date || null, item.start_time || null,
+                item.end_time || null, item.location || null,
+                typeof item.recurrence === 'string' ? item.recurrence : JSON.stringify(item.recurrence || {}),
+                item.recurrence_id || null,
+                item.updated_at || nowIso,
+              ));
+            }
+            for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
+          }
+
+          if (Array.isArray(notes)) {
+            const stmts = [
+              env['ST-DATABASE'].prepare('DELETE FROM split_task_notes WHERE user_id = ?').bind(userId),
+            ];
+            const nowIso = new Date().toISOString();
+            for (const [noteIndex, note] of notes.entries()) {
+              if (!note || typeof note.id === 'undefined' || note.id === null) continue;
+              stmts.push(env['ST-DATABASE'].prepare(`
+                INSERT INTO split_task_notes (
+                  id, user_id, text, category_id, created_at, updated_at, hidden, text_is_encrypted, sort_order
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, id) DO UPDATE SET
+                  text = excluded.text,
+                  category_id = excluded.category_id,
+                  created_at = excluded.created_at,
+                  updated_at = excluded.updated_at,
+                  hidden = excluded.hidden,
+                  text_is_encrypted = excluded.text_is_encrypted,
+                  sort_order = excluded.sort_order
+              `).bind(
+                String(note.id), userId, String(note.text ?? ''),
+                note.category_id ?? null,
+                note.created_at || nowIso,
+                note.updated_at || nowIso,
+                note.hidden === 1 || note.hidden === '1' ? 1 : 0,
+                note.text_is_encrypted === 1 || note.text_is_encrypted === '1' ? 1 : 0,
+                Number.isInteger(note.sort_order) ? note.sort_order : noteIndex,
+              ));
+            }
+            for (const batch of chunked(stmts)) await env['ST-DATABASE'].batch(batch);
+          }
+
+          if (settings || Array.isArray(categories) || Array.isArray(items) || Array.isArray(notes)) {
+            try {
+              await env['ST-DATABASE'].prepare(`
+                INSERT INTO split_task_sync_versions (user_id, version) VALUES (?, 1)
+                ON CONFLICT(user_id) DO UPDATE SET version = version + 1
+              `).bind(userId).run();
+            } catch (err) {
+              console.warn('[sync] version bump skipped:', err?.message || err);
+            }
+          }
+
+          return jsonResponse({ success: true, message: 'Sync complete' });
         } catch (err) {
-          // Fail LOUD but structured: 400 + message instead of an opaque 500
-          // that the client retries forever ("Waiting to sync").
           console.error('[sync] push failed:', err?.stack || err?.message || err);
           return jsonResponse({ error: 'Sync failed: ' + (err?.message || 'unknown') }, 400);
         }
@@ -1614,8 +2441,6 @@ export default {
 
       // ─── POST /api/tickets ───────────────────────────────────────────────
       if (url.pathname === '/api/tickets' && request.method === 'POST') {
-        // 5 tickets/hr/IP: stops spam floods filling ST-TICKETS.
-        // NOTE: rate window lives in ST-DATABASE (app_state), tickets in ST-TICKETS.
         const ip = request.headers.get('cf-connecting-ip') || 'ip';
         const rl = await checkRateLimit(env['ST-DATABASE'], `tickets:${ip}`, 5, 3600000);
         if (!rl.ok) return rateLimitedResponse(rl.retryAfter, corsHeaders);
@@ -1641,13 +2466,11 @@ export default {
         const id = crypto.randomUUID();
         await ticketsDb.prepare('INSERT INTO support_tickets (id, username, email, type, message) VALUES (?, ?, ?, ?, ?)')
           .bind(id, username, email, type, message).run();
-        // Fire-and-forget confirmation; never blocks/fails the ticket.
         if (email) ctx?.waitUntil?.(sendTicketConfirmation(env, email, id, type, message).catch(() => {}));
         return jsonResponse({ success: true, id });
       }
 
       // ─── GET /api/tickets ────────────────────────────────────────────────
-      // Admin-only: requires Bearer <admin token> (open reads leaked all tickets).
       if (url.pathname === '/api/tickets' && request.method === 'GET') {
         if (!(await checkAdminAuth(request, env)))
           return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -1688,7 +2511,6 @@ export default {
       }
 
       // ── Custom 404 ───────────────────────────────────────────────────────
-      // /api/* → JSON error; anything else (browser at the worker URL) → page.
       if (url.pathname.startsWith('/api/')) {
         return jsonResponse({ error: 'Endpoint not found' }, 404);
       }
@@ -1721,8 +2543,6 @@ export default {
       });
 
     } catch (err) {
-      // Never leak D1 internals (e.g. "D1_ERROR: UNIQUE constraint failed").
-      // Duplicate usernames → friendly 409; other D1 errors → generic 500.
       const msg = err?.message || 'Something went wrong. Please try again.';
       if (/UNIQUE constraint failed|SQLITE_CONSTRAINT/i.test(msg) && /users\.username/i.test(msg)) {
         return jsonResponse({ error: 'That username is already taken. Please choose another one.' }, 409);
@@ -1735,17 +2555,10 @@ export default {
     }
   },
 
-  /**
-   * Daily retention sweep (Cloudflare Cron Trigger, e.g. "0 0 * * *" in
-   * wrangler.toml). Optional: the lazy sweep in GET /api/sync covers it.
-   */
   async scheduled(controller, env, ctx) {
     ctx.waitUntil(
       runDailySweep(env).catch(err => console.error('[sweep] cron sweep failed:', err))
     );
-    // Uptime heartbeat for cron ticks too. A `0 * * * *` (hourly) trigger in
-    // the dashboard is what gives low-traffic sites true hourly coverage —
-    // without it, /api/status reports "— · collecting data" (qualifyWindow).
     if (env['ST-DATABASE']) {
       ctx.waitUntil(recordUptimeTick(env['ST-DATABASE']));
     }
