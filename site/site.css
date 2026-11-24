@@ -1531,7 +1531,7 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 
 /* Home desk interaction: keep the illustration at a stable drawing ratio, then
    turn the selected screen into a readable, keyboard-operable detail view. */
-.mm-hero--desk { min-height: 0; overflow: hidden; background: #0e2f76; position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; color: #202a30; border: none; }
+.mm-hero--desk { min-height: 0; overflow: hidden; background: #f1eee8; position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; color: #202a30; border: none; }
 .desk-stage { width: min(100%, 1180px); min-height: 0; height: auto; aspect-ratio: 10 / 7; margin: 0 auto; overflow: hidden; isolation: isolate; }
 .desk-prompt { position: absolute; z-index: 4; top: 2.5%; left: 50%; transform: translateX(-50%); margin: 0; padding: 7px 12px; border: 1px solid rgba(74,87,86,.2); border-radius: 999px; background: rgba(250,251,248,.88); color: #536465; font-size: 12px; letter-spacing: .02em; white-space: nowrap; pointer-events: none; }
 .desk-stage.has-active .desk-prompt { opacity: 0; }
