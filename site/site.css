@@ -14,11 +14,11 @@
   --accent-on-dark: #aac0e1;
   --bg: #f5feff;
   --surface: #ffffff;
-  --text: #0e2f76;
+  --text: #202a30;
   --text-light: #58666e;
-  --border: #aac0e1;
-  --shadow-sm: 0 1px 2px rgba(14, 47, 118, 0.06);
-  --shadow-md: 0 12px 24px -16px rgba(14, 47, 118, 0.2);
+  --border: #e0e5e7;
+  --shadow-sm: 0 1px 2px rgba(23, 39, 48, 0.06);
+  --shadow-md: 0 12px 24px -16px rgba(23, 39, 48, 0.2);
   --radius: 12px;
   --space-1: 4px;
   --space-2: 8px;
@@ -1531,7 +1531,7 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 
 /* Home desk interaction: keep the illustration at a stable drawing ratio, then
    turn the selected screen into a readable, keyboard-operable detail view. */
-.mm-hero--desk { min-height: 0; overflow: hidden; background: #f1eee8; }
+.mm-hero--desk { min-height: 0; overflow: hidden; background: #0e2f76; position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; color: #202a30; border: none; }
 .desk-stage { width: min(100%, 1180px); min-height: 0; height: auto; aspect-ratio: 10 / 7; margin: 0 auto; overflow: hidden; isolation: isolate; }
 .desk-prompt { position: absolute; z-index: 4; top: 2.5%; left: 50%; transform: translateX(-50%); margin: 0; padding: 7px 12px; border: 1px solid rgba(74,87,86,.2); border-radius: 999px; background: rgba(250,251,248,.88); color: #536465; font-size: 12px; letter-spacing: .02em; white-space: nowrap; pointer-events: none; }
 .desk-stage.has-active .desk-prompt { opacity: 0; }
@@ -1565,8 +1565,8 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 .desk-stage.has-active[data-focus="free"] .desk-svg { transform: scale(1.55); transform-origin: 76% 38%; }
 .desk-reset { bottom: 4%; flex-direction: row; gap: 8px; padding: 10px 16px; border-color: #cbd1cd; box-shadow: 0 4px 16px rgba(38,41,37,.12); }
 .desk-reset.is-visible { display: flex; }
-.mm-hero--desk .mm-hero-inner { z-index: 2; margin: -2px auto 0; padding: 14px 24px 32px; width: 100%; border-radius: 0; background: #f1eee8; }
-.mm-hero--desk .mm-hero-inner h1 { margin-bottom: 14px; font-size: clamp(30px, 4vw, 48px); }
+.mm-hero--desk .mm-hero-inner { z-index: 2; margin: -2px auto 0; padding: 32px 24px 80px; width: 100%; border-radius: 0; background: transparent; }
+.mm-hero--desk .mm-hero-inner h1 { margin-bottom: 16px; font-size: clamp(30px, 4vw, 48px); color: #f5f0e0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 @media (max-width: 700px) {
   .desk-stage { width: 100%; min-height: 0; aspect-ratio: 10 / 7; }
   .monitor-label { font-size: 8px; }
