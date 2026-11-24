@@ -118,23 +118,75 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .nav-drop .drop-menu a { display: block; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-light); white-space: nowrap; }
 .nav-drop .drop-menu a:hover { background: var(--brand-50); color: var(--text); }
 
-/* Home hero: asymmetric two-column, left-aligned. */
-.hero {
-  max-width: var(--container); margin: 0 auto; padding: 48px 0 8px;
-  display: grid; grid-template-columns: 1.35fr 1fr; gap: 48px; align-items: center;
+/* Home hero: abstract painting hero with S-curved brushstrokes */
+.mm-hero--desk {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; overflow: hidden; width: 100%; color: var(--text);
+  border: none;
+  min-height: clamp(560px, calc(100svh - 60px), 780px);
+  background: var(--surface);
+  border-radius: 0;
+  margin-top: 0;
 }
-.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--accent-strong); background: var(--accent-soft); padding: 4px 8px; border-radius: 4px; }
-.hero h1 { margin: 18px 0 14px; font-family: var(--font-display); font-size: 42px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; }
-.hero p { margin: 0 0 26px; font-size: 16px; line-height: 1.65; color: var(--text-light); max-width: 46ch; }
-/* Support link sits directly under "Read my policies". */
-.hero .actions { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-.hero-panel {
-  background: var(--brand-50); color: var(--text); border: 1px solid var(--brand-tint); border-radius: 12px; padding: 24px;
+
+/* Painting background: deep midnight-blue and black with cream brushstrokes */
+.painting-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background: 
+    radial-gradient(1200px 600px at 20% 80%, rgba(255,255,255,0.15), transparent),
+    radial-gradient(800px 400px at 80% 20%, rgba(255,255,255,0.1), transparent),
+    var(--bg);
 }
-.hero-panel-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-light); margin-bottom: 16px; }
-.hero-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-.hero-panel li { position: relative; padding-left: 24px; font-family: var(--font-display); font-size: 17px; font-weight: 500; }
-.hero-panel li::before { content: ''; position: absolute; left: 0; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); }
+
+.lower-brush, .upper-brush {
+  position: absolute; inset: 0; pointer-events: none;
+  border-radius: 50%;
+}
+
+/* Lower-left convex brushstroke - warm cream arch */
+.lower-brush {
+  background: 
+    linear-gradient(135deg, #f5f0e0 0%, #e8e4dc 50%, #d0c8c0 100%);
+  mask: 
+    linear-gradient(white 0 0) content-box,
+    linear-gradient(white 0 0);
+  mask-composite: exclude;
+}
+
+/* Upper-right concave brushstroke - warm cream */
+.upper-brush {
+  background: 
+    linear-gradient(45deg, #f5f0e0 0%, #e8e4dc 50%, #d0c8c0 100%);
+}
+
+/* Ground layer with texture */
+.ground {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 20%;
+  background: 
+    repeating-linear-gradient(90deg, transparent 0 20px, rgba(0,0,0,0.3) 20px 22px),
+    linear-gradient(180deg, #2d223d 0%, #4a3b52 100%);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  mask-image: radial-gradient(ellipse at 50% 0, transparent 20px, black 40px);
+  mask-size: 100% 100%;
+}
+
+/* Main hero content area */
+.mm-hero-inner {
+  position: relative; z-index: 2; margin: -2px auto 0; padding: 32px 24px 80px; width: 100%; 
+  border-radius: 0; background: transparent;
+}
+
+.mm-hero--desk .mm-hero-inner h1 {
+  margin-bottom: 16px; 
+  font-size: clamp(30px, 4vw, 48px); 
+  color: #f5f0e0; 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.desk-stage { width: min(100%, 1180px); min-height: 0; height: auto; aspect-ratio: 10 / 7; margin: 0 auto; overflow: hidden; isolation: isolate; }
+
+.desk-prompt { position: absolute; z-index: 4; top: 2.5%; left: 50%; transform: translateX(-50%); margin: 0; padding: 7px 12px; border: 1px solid rgba(74,87,86,.2); border-radius: 999px; background: rgba(250,251,248,.88); color: #536465; font-size: 12px; letter-spacing: .02em; white-space: nowrap; pointer-events: none; }
+
+.desk-stage.has-active .desk-prompt { opacity: 0; }
 
 /* Home mission sections. */
 .section-head { max-width: 620px; margin: 0 0 24px; }
