@@ -1539,6 +1539,8 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 .monitor-frame { filter: drop-shadow(0 8px 8px rgba(43,35,27,.14)); }
 .monitor-overlay { appearance: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: #273238; text-align: left; transform: none; box-shadow: none; overflow: visible; cursor: pointer; }
 .monitor-overlay:focus-visible { outline: 3px solid #c27635; outline-offset: 5px; border-radius: 3px; }
+.monitor-privacy { clip-path: polygon(0 0, 100% 7.5%, 100% 100%, 9% 95%); }
+.monitor-free { clip-path: polygon(0 7.5%, 100% 0, 91% 100%, 0 95%); }
 .monitor-label { position: absolute; top: 9%; left: 9%; z-index: 2; transform: none; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; font: 700 clamp(8px, 1vw, 13px)/1.2 'Manrope', system-ui, sans-serif; letter-spacing: .01em; color: #354c58; }
 .monitor-lines { position: absolute; left: 9%; right: 10%; top: 26%; width: auto; height: auto; padding: 0; gap: clamp(4px, .65vw, 9px); border: 0; border-radius: 0; background: transparent; }
 .line { height: clamp(2px, .34vw, 5px); border-radius: 0; background: #bdc9c8; animation: none; opacity: .74; }
@@ -1552,7 +1554,7 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 .monitor-content ul.stack-list li::before { content: none; }
 .monitor-content ul.stack-list strong { display: block; color: #344271; }
 .monitor-content ul.stack-list em { display: block; margin-top: 4px; color: #69777b; font-size: .88em; font-style: normal; }
-.monitor-overlay.is-active { z-index: 35; top: 11% !important; left: 11% !important; width: 78% !important; height: 75% !important; transform: none; border: 7px solid #282f32; border-radius: 8px; background: #fbfcfa; box-shadow: 0 24px 70px rgba(28,34,34,.28); cursor: default; }
+.monitor-overlay.is-active { z-index: 35; top: 11% !important; left: 11% !important; width: 78% !important; height: 75% !important; transform: none; clip-path: none; border: 7px solid #282f32; border-radius: 8px; background: #fbfcfa; box-shadow: 0 24px 70px rgba(28,34,34,.28); cursor: default; }
 .monitor-overlay.is-active .monitor-label { position: static; display: block; margin: 23px 0 0 28px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: #667577; }
 .monitor-overlay.is-active .monitor-lines { display: none; }
 .monitor-overlay.is-active .monitor-content { display: flex; height: calc(100% - 48px); }
