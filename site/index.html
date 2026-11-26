@@ -94,46 +94,6 @@
 
     <main class="page mm-home">
       <section class="mm-hero mm-hero--painting" id="mm-hero">
-        <div class="painting-art" aria-hidden="true">
-          <svg viewBox="0 0 1600 800" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <linearGradient id="night-ground" x1="0" y1="0" x2="1" y2="1">
-                <stop stop-color="#080b12" /><stop offset=".48" stop-color="#10182a" /><stop offset="1" stop-color="#07090f" />
-              </linearGradient>
-              <linearGradient id="warm-paint" x1="0" y1="0" x2=".85" y2="1">
-                <stop stop-color="#fff4dc" /><stop offset=".42" stop-color="#e9dfca" /><stop offset=".76" stop-color="#c9bda9" /><stop offset="1" stop-color="#f2eadb" />
-              </linearGradient>
-              <filter id="paint-edge" x="-6%" y="-18%" width="112%" height="136%">
-                <feTurbulence type="fractalNoise" baseFrequency=".018 .065" numOctaves="3" seed="17" result="grain" />
-                <feDisplacementMap in="SourceGraphic" in2="grain" scale="24" xChannelSelector="R" yChannelSelector="G" />
-              </filter>
-              <filter id="canvas-grain" x="0" y="0" width="100%" height="100%">
-                <feTurbulence type="fractalNoise" baseFrequency=".48" numOctaves="3" seed="8" result="canvas" />
-                <feColorMatrix in="canvas" type="saturate" values="0" result="mono" />
-                <feComponentTransfer in="mono"><feFuncA type="table" tableValues="0 .24" /></feComponentTransfer>
-              </filter>
-            </defs>
-            <rect width="1600" height="800" fill="url(#night-ground)" />
-            <path d="M-70 338 C110 296 220 108 392 145 C566 182 651 431 824 445 C1012 460 1158 242 1317 187 C1460 137 1565 222 1680 246 C1570 342 1477 272 1338 309 C1165 355 1012 558 820 541 C625 526 500 294 380 256 C220 204 124 416 -70 485Z" fill="url(#warm-paint)" filter="url(#paint-edge)" />
-            <path d="M-28 346 C125 305 235 125 392 157 C560 192 654 432 824 445 C1012 460 1158 242 1317 187 C1460 137 1565 222 1680 246" fill="none" stroke="#fff8e9" stroke-width="10" opacity=".72" stroke-linecap="round" />
-            <path d="M-58 454 C136 391 236 207 376 246 C507 283 621 514 817 526 C1007 539 1155 338 1325 293 C1472 254 1561 327 1664 282" fill="none" stroke="#aa9d8d" stroke-width="9" opacity=".5" stroke-linecap="round" />
-            <g fill="none" stroke-linecap="round">
-              <path d="M-30 322 C105 279 234 103 382 136 C545 172 658 408 820 423 C1005 439 1149 226 1304 170 C1452 117 1565 205 1672 224" stroke="#fff6e2" stroke-width="4" opacity=".58" />
-              <path d="M18 367 C148 326 244 158 391 184 C548 212 665 452 828 466 C1005 481 1167 270 1329 215 C1478 164 1578 249 1668 270" stroke="#f7edda" stroke-width="3" opacity=".53" />
-              <path d="M-42 470 C131 412 243 228 371 265 C507 306 633 534 817 548 C1001 562 1169 355 1334 315 C1479 281 1573 348 1655 302" stroke="#d8cbb5" stroke-width="5" opacity=".5" />
-              <path d="M-12 304 l48 -17 M74 277 l36 -25 M218 196 l30 -26 M311 145 l45 -9 M455 196 l34 25 M552 311 l37 41 M701 419 l42 17 M906 420 l40 -19 M1055 324 l36 -31 M1191 220 l42 -23 M1430 151 l44 8 M1546 202 l40 16" stroke="#fff8ea" stroke-width="3" opacity=".58" />
-              <path d="M-18 486 l46 -13 M92 442 l37 -27 M248 284 l29 -19 M410 293 l37 23 M541 423 l36 38 M665 535 l45 12 M943 515 l40 -21 M1094 405 l35 -29 M1247 328 l45 -19 M1460 282 l39 9 M1586 333 l36 -10" stroke="#958776" stroke-width="3" opacity=".5" />
-            </g>
-            <path d="M618 -72 C786 -8 897 138 1075 157 C1274 179 1441 76 1680 -39 L1680 98 C1453 169 1278 277 1074 248 C870 219 776 83 618 -72Z" fill="url(#warm-paint)" filter="url(#paint-edge)" />
-            <path d="M655 -59 C817 11 914 145 1080 164 C1278 187 1450 76 1656 -27" fill="none" stroke="#fff8e9" stroke-width="8" opacity=".72" stroke-linecap="round" />
-            <path d="M638 -23 C799 52 908 200 1070 226 C1268 257 1448 143 1650 72" fill="none" stroke="#aa9d8d" stroke-width="7" opacity=".48" stroke-linecap="round" />
-            <path d="M648 -43 C804 30 918 163 1080 182 C1276 205 1455 91 1658 -8 M630 -4 C792 72 900 221 1067 243 C1267 270 1440 164 1648 93" fill="none" stroke="#f8efdd" stroke-width="4" opacity=".5" stroke-linecap="round" />
-            <path d="M686 -54 l43 25 M824 43 l34 32 M945 143 l42 19 M1118 177 l39 -1 M1285 154 l43 -13 M1450 82 l39 -19 M1573 22 l41 -25" fill="none" stroke="#fff7e8" stroke-width="3" opacity=".56" stroke-linecap="round" />
-            <rect width="1600" height="800" filter="url(#canvas-grain)" opacity=".4" />
-            <rect width="1600" height="800" fill="url(#night-ground)" opacity=".12" />
-            <rect x="8" y="8" width="1584" height="784" fill="none" stroke="#e6dfd3" stroke-width="3" opacity=".28" />
-          </svg>
-        </div>
         <div class="mm-hero-inner">
           <h1>Productivity apps<br /><span>Reimagined.</span></h1>
           <div class="actions mm-actions">
