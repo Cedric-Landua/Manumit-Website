@@ -12,7 +12,7 @@
   --accent-strong: #0e2f76;
   --accent-soft: rgba(14, 47, 118, 0.12);
   --accent-on-dark: #aac0e1;
-  --bg: #f5feff;
+  --bg: #f7f8fa;
   --surface: #ffffff;
   --text: #202a30;
   --text-light: #58666e;
@@ -30,7 +30,7 @@
   --space-16: 64px;
   --container: 1120px;
   --font-display: 'Manrope', 'Inter', system-ui, sans-serif;
-  --header-bg: #f5feff;
+  --header-bg: #f7f8fa;
   --footer-bg: var(--surface);
   color-scheme: light;
 }
@@ -1388,11 +1388,7 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
   left: max(28px, calc((100% - 1180px) / 2));
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding: 17px 22px;
-  border: 1px solid rgba(245,240,229,.2);
-  border-radius: 10px;
-  background: rgba(7,10,16,.58);
-  backdrop-filter: blur(10px);
+  padding: 17px 0;
 }
 .painting-principles > div { display: flex; flex-direction: column; gap: 4px; padding: 0 20px; }
 .painting-principles > div + div { border-left: 1px solid rgba(245,240,229,.2); }
