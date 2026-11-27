@@ -1,0 +1,58 @@
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+
+/google852649c4e1572428.html
+  Content-Type: text/html; charset=utf-8
+
+# Unhashed assets change in place between deploys, so they must be revalidated
+# instead of sitting in a browser (or edge) cache. Without this, a fresh deploy
+# can pair new HTML with a stale stylesheet, and the page renders with the old
+# layout - e.g. the product page's launch button dropping out of the header
+# because site.css had no .prod-head rules yet. (The app's Vite bundles under
+# /products/<product>/app/assets/ are content-hashed, so they keep long caching.)
+#
+# NOTE: on the manumit.studio custom domain the zone's browser cache currently
+# overrides these to max-age=14400 (the pages.dev deployment honors them), so
+# `npm run assemble` additionally stamps ?v=<content hash> on shell CSS/JS
+# references - changed bytes always mean a new URL, so a deploy can never pair
+# new HTML with a stale asset. Set the zone's Caching > Browser Cache TTL to
+# "Respect Origin Headers" to make this file authoritative there too.
+#
+# Security boundary: /api/* is served by the Worker, which already answers
+# `Cache-Control: no-store` on every JSON response. These static rules never
+# touch per-user data - the pull stays fresh via client `cache: 'no-store'` +
+# `_ts` buster and the server `version` conditional (`{ unchanged: true }`).
+/site.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/policies/policies.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/nav.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/help-widget.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/help.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/admin.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/shared.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/status.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Unhashed like site.css; the tab logo changes in place between deploys.
+/favicon.svg
+  Cache-Control: public, max-age=0, must-revalidate
+
+# App bundles are content-hashed by Vite (assets/*.js / *.css include a hash),
+# so a changed file gets a new URL and an unchanged URL is byte-identical
+# forever. Long edge+browser caching here is safe and never touches per-user
+# data (all /api/* JSON is `no-store` from the Worker + client no-store/_ts).
+/products/split-task/app/assets/*
+  Cache-Control: public, max-age=31536000, immutable

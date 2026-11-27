@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Free-er Apps</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <meta name="theme-color" content="#f4f6f7" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/site.css?v=147" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="bar">
+        <a class="brand" href="/">Free-er Apps</a>
+        <nav aria-label="Site">
+          <a href="/">Home</a>
+          <div class="nav-drop">
+            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu"><a href="/products/split-task/">Split Task</a><a href="/products/syllable/">Syllable</a></div>
+          </div>
+          <a href="/data/">Data</a>
+          <div class="nav-drop">
+            <a href="/policies/" class="drop-toggle">Policies <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <div class="drop-menu"><a href="/policies/privacy/">Privacy Policy</a><a href="/policies/eula/">EULA</a></div>
+          </div>
+        </nav>
+              </div>
+    </header>
+
+    <main class="page" id="admin-dashboard">
+      <div class="admin-page">
+        <div class="admin-header">
+          <h1>Admin &middot; Tickets</h1>
+          <div class="admin-header-actions">
+            <button type="button" class="admin-logout-btn" id="admin-logout-btn">Sign Out</button>
+          </div>
+        </div>
+
+        <div class="admin-stats" id="admin-stats">
+          <div class="admin-stat"><div class="value">0</div><div class="label">Total</div></div>
+          <div class="admin-stat"><div class="value">0</div><div class="label">Open</div></div>
+          <div class="admin-stat"><div class="value">0</div><div class="label">Resolved</div></div>
+        </div>
+
+        <div class="admin-tabs" id="admin-tabs">
+          <button class="admin-tab" data-filter="all">All</button>
+          <button class="admin-tab" data-filter="open">Open</button>
+          <button class="admin-tab" data-filter="resolved">Resolved</button>
+        </div>
+
+        <div class="admin-loading" id="admin-loading">Loading tickets...</div>
+        <div class="admin-tickets" id="admin-tickets"></div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="grid">
+        <div class="col">
+          <h2>Free-er Apps</h2>
+          <div class="blurb">Independent development where free, quality, and privacy are the priorities.</div>
+          <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
+        </div>
+        <div class="col">
+          <h2>Products</h2>
+          <a href="/products/">Browse</a>
+          <a href="/products/split-task/">Split Task</a>
+          <a href="/products/syllable/">Syllable</a>
+        </div>
+        <div class="col">
+          <h2>Site</h2>
+          <a href="/">Home</a>
+          <a href="/products/">Products</a>
+        </div>
+        <div class="col">
+          <h2>Legal</h2>
+          <a href="/policies/">Policies</a>
+          <a href="/policies/privacy/">Privacy Policy</a>
+          <a href="/policies/eula/">EULA</a>
+        </div>
+      </div>
+      <div class="bottom">© 2026 Free-er Apps · All rights reserved · Site v8</div>
+    </footer>
+    <script defer src="/shared.js"></script>
+    <script defer src="/nav.js"></script>
+    <script defer src="/admin.js"></script>
+    <script defer src="/help-widget.js"></script>
+  </body>
+</html>

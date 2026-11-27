@@ -1,0 +1,273 @@
+.faq-list { display: flex; flex-direction: column; gap: 8px; max-width: 780px; margin: 0 auto; width: 100%; }
+.faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.faq-item summary { cursor: pointer; padding: 16px; font-weight: 600; font-size: 15px;
+  list-style: none; display: flex; align-items: center; gap: 10px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: "+"; margin-left: auto; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--brand-50); color: var(--brand); font-size: 16px; font-weight: 500; }
+.faq-item[open] summary::after { content: "–"; background: var(--brand-dark); color: #fff; }
+.faq-item p { margin: 0; padding: 0 16px 16px; font-size: 14px; color: var(--text-light); line-height: 1.65; }
+/* Hover-peek + click-pin (JS adds .peek while hovering, .pinned on click).
+   Grid-rows trick animates the open/close smoothly. */
+.faq-item .faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.22s ease; }
+.faq-item .faq-body > p { overflow: hidden; padding-bottom: 0; }
+.faq-item[open] .faq-body, .faq-item.peek .faq-body { grid-template-rows: 1fr; }
+.faq-item[open] .faq-body > p, .faq-item.peek .faq-body > p { padding-bottom: 15px; }
+.faq-item.peek { border-color: var(--brand); }
+@media (hover: none) {
+  .faq-item .faq-body { display: block; }
+  .faq-item:not([open]) .faq-body { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-item .faq-body { transition: none; }
+}
+
+/* Policies pages (overview cards + policy articles). Card grid shared with /products/. */
+.policies-head { max-width: 860px; margin: 0 auto; }
+.policies-head h1 { margin: 0 0 8px; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
+.policies-head .lede { margin: 0; color: var(--text-light); font-size: 16px; line-height: 1.65; max-width: 660px; }
+
+/* Sub-tab bar: header active-tab look, dark text on page bg. */
+.subtabs { display: flex; gap: 4px; margin: 24px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.subtabs a { padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-light); white-space: nowrap; border: 1px solid transparent; transition: color 0.15s ease, background-color 0.15s ease; }
+.subtabs a:hover { color: var(--text); background: var(--bg); border-color: var(--border); }
+.subtabs a.active { color: var(--text); font-weight: 600; background: var(--surface); border: 1px solid var(--border); box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* Overview cards (also .card-grid on /products/ + product page). */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 24px; }
+.policy-card {
+  display: flex; flex-direction: column; gap: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.policy-card:hover { background: var(--bg); border-color: var(--brand); }
+.policy-card .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.policy-card h2 { margin: 0; font-size: 20px; font-weight: 600; color: var(--text); }
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+.badge.ready { background: rgba(14, 47, 118, 0.14); color: #0e2f76; }
+.badge.draft { background: rgba(14, 47, 118, 0.14); color: #0e2f76; }
+.policy-card .summary { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
+.policy-card .key-points { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--text); }
+.policy-card .card-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--brand-dark); }
+.policy-card .card-link:hover { color: var(--brand-strong); }
+.policy-card .card-link.soon { color: var(--text-light); font-weight: 500; }
+/* Non-clickable placeholder: no lift. */
+.policy-card:not(a):hover { background: var(--surface); border-color: var(--border); }
+
+/* ── Policy article pages ───────────────────────────────────────────────── */
+.policy-article { max-width: 780px; margin: 32px auto 0; width: 100%; }
+.prod-redesign .policy-article { margin-top: 0; }
+.policy-article .policy-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+.policy-meta .meta-chip { background: transparent; color: var(--text-light); font-size: 12px; font-weight: 500; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; }
+.policy-article .intro { margin: 0 0 24px; font-size: 16px; line-height: 1.7; color: var(--text); }
+.policy-article section.policy-block { background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 24px 0; margin: 0; }
+.policy-article section h2 { margin: 0 0 12px; font-size: 20px; font-weight: 600; color: var(--text); }
+.policy-article h3 { margin: 16px 0 6px; font-size: 15px; font-weight: 600; color: var(--text); }
+.policy-article p, .policy-article li { line-height: 1.7; font-size: 16px; }
+.policy-article ul { padding-left: 20px; margin: 8px 0 0; }
+.policy-article a { color: var(--brand-dark); text-decoration: underline; }
+
+/* EULA draft placeholder */
+.draft-banner {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--brand-50); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 12px 16px; font-size: 14px; font-weight: 500;
+}
+.draft-banner svg { flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   POLICIES REDESIGN (v136) — overview + privacy/eula articles.
+   Scoped under .pol-redesign / .pol-article-page so /products/ is untouched.
+   TO REVERT overview: delete the .pol-redesign/.pol-card rules AND restore
+   site/policies/index.backup.html over site/policies/index.html.
+   TO REVERT articles: restore site/policies/privacy/index.backup.html and
+   site/policies/eula/index.backup.html, then delete .pol-article-page rules.
+   ══════════════════════════════════════════════════════════════════════════ */
+.pol-redesign { position: relative; }
+.pol-redesign::before { content: none; }
+
+/* Header */
+.pol-redesign .policies-head { max-width: 780px; }
+.pol-redesign .policies-head h1 { font-size: clamp(30px, 5vw, 40px); font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
+.pol-redesign .policies-head .lede { font-size: 16px; max-width: 620px; }
+
+/* Cards use a neutral surface and a single blue accent for icons and links. */
+.pol-redesign .card-grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+.pol-card { padding: 24px; gap: 16px; }
+.pol-card:hover { border-color: var(--brand); }
+.pol-card .card-top { align-items: center; }
+.pol-card-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
+  color: var(--brand-dark);
+  background: var(--brand-50);
+  border: 1px solid var(--border);
+}
+.product-card-heading { display: flex; align-items: center; gap: 12px; }
+.product-card-heading .pol-card-icon { width: 48px; height: 48px; overflow: hidden; border: 0; border-radius: 10px; background: transparent; color: inherit; }
+.product-card-heading .pol-card-icon svg { display: block; width: 100%; height: 100%; }
+.product-card-heading h2 { margin: 0; }
+.product-card-heading .syllable-card-logo { width: 72px; border-radius: 10px; }
+.pol-redesign .policy-card h2 { font-size: 20px; font-weight: 600; }
+.pol-redesign .policy-card .key-points { list-style: disc; padding-left: 22px; gap: 8px; }
+.pol-redesign .policy-card .key-points li { display: list-item; font-size: 14px; line-height: 1.55; }
+.pol-redesign .policy-card .key-points li::marker { color: var(--brand); }
+.pol-redesign .policy-card .key-points li svg { display: none; }
+.pol-redesign .policy-card .card-link { margin-top: auto; color: var(--brand-dark); }
+.pol-arrow { transition: color 0.15s ease; }
+
+/* Article pages (privacy + eula): shared accent per page */
+.pol-article-page { --pol-accent: var(--brand); }
+.pol-breadcrumb {
+  display: flex; flex-wrap: wrap; gap: 8px; max-width: 780px; margin: 0 auto;
+}
+.pol-breadcrumb a {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 500; color: var(--text-light);
+  background: transparent; border: 1px solid transparent;
+  padding: 8px; border-radius: 6px;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.pol-breadcrumb a:hover {
+  color: var(--pol-accent);
+  border-color: var(--border); background: var(--surface);
+}
+.pol-article-page .policies-head { margin: 18px auto 0; }
+.pol-article-page .policy-article { max-width: 780px; }
+.pol-article-page .policy-meta .meta-chip {
+  border: 1px solid color-mix(in srgb, var(--pol-accent) 25%, transparent);
+  background: color-mix(in srgb, var(--pol-accent) 8%, var(--surface));
+}
+.pol-article-page .intro {
+  border-left: 0;
+  padding-left: 0;
+}
+.pol-article-page section.policy-block {
+  border-top: 1px solid var(--border);
+}
+.pol-article-page section.policy-block h2 { color: var(--text); }
+.pol-article-page a { color: var(--pol-accent); }
+.pol-article-page--privacy { --pol-accent: var(--brand); }
+
+@media (max-width: 640px) {
+  .pol-redesign .card-grid { margin-top: 24px; }
+}
+
+/* Products and marketing pages, scoped so policy articles retain their own layout.
+   TO REVERT /products/: restore site/products/index.backup.html over
+   site/products/index.html, then delete this block.
+   TO REVERT the product page: restore
+   site/products/split-task/index.backup.html over
+   site/products/split-task/index.html, then delete this block.
+   ══════════════════════════════════════════════════════════════════════════ */
+.prod-redesign { position: relative; }
+.prod-redesign::before { content: none; }
+.prod-redesign .policies-head { max-width: 780px; }
+.prod-redesign .policies-head h1 { font-size: clamp(30px, 5vw, 40px); font-weight: 600; letter-spacing: -0.02em; margin-bottom: 12px; }
+.prod-redesign .policies-head .lede { font-size: 16px; max-width: 620px; }
+.prod-redesign .card-grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+.prod-redesign .product-card-heading { margin-bottom: 8px; }
+.prod-redesign .prod-tags { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 0; padding: 0; list-style: none; }
+.prod-redesign .prod-tags li {
+  font-size: 14px; font-weight: 400; line-height: 1.5;
+  color: var(--text-light);
+  padding: 0; border: 0;
+}
+.prod-redesign .prod-tags li::before { content: ""; display: inline-block; width: 4px; height: 4px; margin: 0 8px 3px 0; border-radius: 50%; background: var(--brand); }
+.prod-redesign .split-task-product-card .prod-tags { display: grid; justify-items: start; gap: 7px; }
+.prod-redesign .prod-card--soon .prod-tags { display: grid; justify-items: start; gap: 7px; }
+.prod-redesign .policy-card .card-link { margin-top: auto; }
+
+/* Placeholder card remains a normal neutral card. */
+.prod-redesign .prod-card--soon { background: var(--surface); }
+
+/* Product page cross-navigation sits beneath the title. */
+.prod-breadcrumb { --pol-accent: var(--brand); }
+.prod-redesign .prod-head { margin-top: 16px; }
+
+/* Header grid: title and launch action above the cross-navigation links. */
+.prod-redesign .prod-head {
+  display: grid; grid-template-columns: 1fr auto;
+  grid-template-areas: "title action" "nav nav";
+  align-items: start; gap: 24px 32px;
+}
+.prod-redesign .prod-head .policies-head { grid-area: title; max-width: 760px; margin: 0; }
+.prod-redesign .prod-head .policies-head .prod-actions { display: contents; }
+/* Launch button: top-right, aligned to the title's first line. */
+.prod-redesign .prod-head .launch {
+  grid-area: action; align-self: start; position: static;
+  padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 600;
+}
+/* Cross-navigation spans the available width below the title and action. */
+.prod-redesign .prod-head .pol-breadcrumb { grid-area: nav; max-width: none; margin: 0; }
+@media (max-width: 720px) {
+  .prod-redesign .prod-head { grid-template-columns: 1fr; grid-template-areas: "title" "action" "nav"; }
+  .prod-redesign .prod-head .launch { justify-self: flex-start; }
+}
+.prod-redesign .prod-actions .pol-breadcrumb { max-width: none; margin: 0; }
+/* All cross-navigation links share the site accent. */
+.prod-redesign .pol-nav--brand    { --pol-accent: var(--brand); }
+.prod-redesign .pol-nav--privacy  { --pol-accent: var(--brand); }
+.prod-redesign .pol-nav--eula     { --pol-accent: var(--brand); }
+.prod-redesign .pol-breadcrumb a.pol-nav--brand,
+.prod-redesign .pol-breadcrumb a.pol-nav--privacy,
+.prod-redesign .pol-breadcrumb a.pol-nav--eula {
+  color: var(--pol-accent);
+  border-color: transparent;
+  background: transparent;
+}
+
+/* Download/access cards: three across on wide screens (2 → 1 as it narrows). */
+.prod-redesign .get-grid { grid-template-columns: repeat(3, 1fr); }
+.prod-redesign .syllable-get-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1024px) { .prod-redesign .get-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 680px)  { .prod-redesign .get-grid { grid-template-columns: 1fr; } }
+/* The Android card's action is a button, not a .card-link — pin it to the
+   bottom so all three cards align at the same baseline. */
+.prod-redesign .get-grid .js-android-download { margin-top: auto; align-self: flex-start; }
+
+.prod-redesign .section-head { margin-bottom: 26px; }
+.prod-redesign .section-head h2 { font-size: clamp(22px, 3.2vw, 28px); }
+.prod-redesign .section-head p { margin-top: 4px; }
+
+/* Highlight tiles (the "you'll use this daily" trio). */
+.prod-redesign .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.prod-redesign .feat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.prod-redesign .feat-card:hover { background: var(--bg); border-color: var(--brand); }
+.prod-redesign .feat-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 8px; margin-bottom: 16px;
+  color: var(--brand); background: var(--brand-50);
+  border: 1px solid var(--border);
+}
+.prod-redesign .feat-card.prod-card--blue .feat-icon { color: #8bc4d8; }
+.prod-redesign .feat-card h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--text); }
+.prod-redesign .feat-card p { margin: 0; color: var(--text-light); font-size: 15px; line-height: 1.65; }
+
+/* Key-point lists: plain bullets, tinted per card — mirrors .pol-redesign above. */
+.prod-redesign .policy-card .key-points { list-style: disc; padding-left: 22px; gap: 8px; }
+.prod-redesign .policy-card .key-points li { display: list-item; font-size: 14px; line-height: 1.55; }
+.prod-redesign .policy-card .key-points li::marker { color: var(--brand); }
+.prod-redesign .policy-card .key-points li svg { display: none; }
+
+/* Narrower list card ("The rest of it"): two columns of ticks on wide screens. */
+.prod-redesign .feat-list { max-width: 780px; margin: 22px auto 0; }
+.prod-redesign .feat-list .key-points { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px 26px; }
+
+/* CTA band reuses the home page's navy strip (already styled in site.css). */
+.prod-cta { margin: 64px auto 0; max-width: 980px; }
+
+@media (max-width: 640px) {
+  .prod-redesign .card-grid { margin-top: 24px; }
+  .prod-redesign .feat-grid { margin-top: 24px; }
+  .prod-redesign .feat-list { margin-top: 18px; }
+}
+Product cards use the original app artwork with a softly rounded frame.
+.prod-redesign .product-card-heading .product-logo { width: 56px; height: 56px; object-fit: cover; border: 0; border-radius: 14px; background: transparent; }

@@ -25,6 +25,33 @@
   var range = '24h';
   var windowsCache = null;
   var lastLive = false;
+  // Last good response, kept so a return visit renders real figures at once
+  // instead of an empty pending state. Storage can throw (private mode,
+  // blocked site data), so every access is guarded and the page works without it.
+  var CACHE_KEY = 'mm-status-cache';
+  var CACHE_MAX_AGE = 24 * 3600000;
+  function readCache() {
+    try {
+      var raw = window.localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      var c = JSON.parse(raw);
+      if (!c || !c.d || Date.now() - c.t > CACHE_MAX_AGE) return null;
+      return c.d;
+    } catch (e) { return null; }
+  }
+  function writeCache(d) {
+    try { window.localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {}
+  }
+  // Drop the skeleton placeholders the first time real (or cached) data lands.
+  function clearSkeleton() {
+    var els = document.querySelectorAll('.mm-net .mm-skel');
+    for (var i = 0; i < els.length; i++) {
+      els[i].classList.remove('mm-skel', 'mm-skel--text', 'mm-skel--num');
+      els[i].removeAttribute('aria-busy');
+    }
+    var dot = document.getElementById('mm-live-dot');
+    if (dot) dot.classList.remove('mm-live-dot--pending');
+  }
   function setUptime(pct) {
     var upEl = document.getElementById('mm-up');
     var lbl = document.getElementById('mm-up-label');
@@ -40,6 +67,7 @@
     windowsCache = (d && d.windows) || null;
     var pct = windowsCache && windowsCache[range] ? windowsCache[range].pct
       : (d && typeof d.uptimePct === 'number' ? d.uptimePct : null);
+    clearSkeleton();
     var state = !ok ? 'down' : (d && d.status === 'degraded') ? 'degraded' : 'up';
     lastLive = (state === 'up');
     if (dot) dot.style.background = state === 'up' ? '#2ee6a8' : state === 'degraded' ? '#d9a521' : '#e0655f';
@@ -147,7 +175,7 @@
         if (!res.ok) throw new Error('bad status');
         return res.json();
       })
-      .then(function (d) { setStatus(true, d); updateHeadline(d); })
+      .then(function (d) { writeCache(d); setStatus(true, d); updateHeadline(d); })
       .catch(function () { clearTimeout(to); setStatus(false, null); });
   }
   function init() {
@@ -165,6 +193,8 @@
         setUptime(windowsCache && windowsCache[range] ? windowsCache[range].pct : null);
       });
     }
+    var cached = readCache();
+    if (cached) { setStatus(true, cached); updateHeadline(cached); }
     check();
     setInterval(check, 3600000); // hourly: buckets are hourly, faster polling only burns D1 reads
   }
