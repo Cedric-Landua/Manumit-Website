@@ -99,30 +99,18 @@ function bindToggleList(rootSel) {
       ensureMenuLink(productMenu, '/products/syllable', 'Syllable');
     }
 
-    var dataLinks = Array.prototype.slice.call(siteNav.querySelectorAll('a')).filter(function (link) {
-      return linkPath(link) === '/data';
+    // Data lives in the footer now; the top nav keeps a direct Support link instead.
+    Array.prototype.slice.call(siteNav.querySelectorAll('a')).forEach(function (link) {
+      if (linkPath(link) === '/data' && !link.closest('.drop-menu')) link.remove();
     });
-    var dataLink = dataLinks.shift();
-    if (!dataLink) {
-      dataLink = document.createElement('a');
-      dataLink.href = '/data/';
-      dataLink.textContent = 'Data';
-    }
-    dataLinks.forEach(function (duplicate) { duplicate.remove(); });
-    if (/^\/data(?:\/|$)/.test(window.location.pathname)) {
-      dataLink.classList.add('active');
-      dataLink.setAttribute('aria-current', 'page');
-    } else {
-      dataLink.classList.remove('active');
-      dataLink.removeAttribute('aria-current');
-    }
-    if (dataLink.parentNode !== siteNav) {
-      var policiesDropdown = Array.prototype.slice.call(siteNav.querySelectorAll('.nav-drop')).find(function (drop) {
-        var toggle = drop.querySelector('.drop-toggle');
-        return toggle && linkPath(toggle) === '/policies';
-      });
-      if (policiesDropdown && policiesDropdown.parentNode === siteNav) siteNav.insertBefore(dataLink, policiesDropdown);
-      else siteNav.appendChild(dataLink);
+    if (!siteNav.querySelector('.nav-support')) {
+      var support = document.createElement('a');
+      support.className = 'nav-support';
+      support.href = 'https://buymeacoffee.com/free.erapps';
+      support.target = '_blank';
+      support.rel = 'noopener';
+      support.textContent = 'Support';
+      siteNav.appendChild(support);
     }
   }
 
@@ -140,6 +128,21 @@ function bindToggleList(rootSel) {
       column.appendChild(syllableLink);
     }
     productLinks.forEach(function (duplicate) { duplicate.remove(); });
+  });
+
+  document.querySelectorAll('.site-footer .col').forEach(function (column) {
+    var heading = column.querySelector('h2');
+    if (!heading || heading.textContent.trim() !== 'Site') return;
+    var links = Array.prototype.slice.call(column.querySelectorAll('a'));
+    links.forEach(function (link) { if (linkPath(link) === '/products') link.remove(); });
+    var dataLinks = links.filter(function (link) { return linkPath(link) === '/data'; });
+    if (!dataLinks.length) {
+      var dataLink = document.createElement('a');
+      dataLink.href = '/data/';
+      dataLink.textContent = 'Data';
+      column.appendChild(dataLink);
+    }
+    dataLinks.slice(1).forEach(function (duplicate) { duplicate.remove(); });
   });
 
   bindToggleList('.nav-drop');

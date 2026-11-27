@@ -42,15 +42,12 @@
   function writeCache(d) {
     try { window.localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {}
   }
-  // Drop the skeleton placeholders the first time real (or cached) data lands.
-  function clearSkeleton() {
-    var els = document.querySelectorAll('.mm-net .mm-skel');
-    for (var i = 0; i < els.length; i++) {
-      els[i].classList.remove('mm-skel', 'mm-skel--text', 'mm-skel--num');
-      els[i].removeAttribute('aria-busy');
-    }
-    var dot = document.getElementById('mm-live-dot');
-    if (dot) dot.classList.remove('mm-live-dot--pending');
+  // The panel's first paint is the optimistic "All systems operational" pill
+  // (or the cached reading, applied in init); the uptime row stays hidden until
+  // a reading exists, so visitors never see a loading or empty state.
+  function showUptimeRow(on) {
+    var row = document.getElementById('mm-up-row');
+    if (row) row.hidden = !on;
   }
   function setUptime(pct) {
     var upEl = document.getElementById('mm-up');
@@ -67,13 +64,15 @@
     windowsCache = (d && d.windows) || null;
     var pct = windowsCache && windowsCache[range] ? windowsCache[range].pct
       : (d && typeof d.uptimePct === 'number' ? d.uptimePct : null);
-    clearSkeleton();
     var state = !ok ? 'down' : (d && d.status === 'degraded') ? 'degraded' : 'up';
     lastLive = (state === 'up');
     if (dot) dot.style.background = state === 'up' ? '#2ee6a8' : state === 'degraded' ? '#d9a521' : '#e0655f';
-    if (txt) txt.textContent = state === 'up' ? 'Operational'
+    var pill = txt && txt.parentNode;
+    if (pill) { pill.classList.toggle('is-degraded', state === 'degraded'); pill.classList.toggle('is-down', state === 'down'); }
+    if (txt) txt.textContent = state === 'up' ? 'All systems operational'
       : state === 'degraded' ? 'Degraded, retrying' : 'Unreachable, retrying';
     setUptime(state === 'up' ? pct : null);
+    showUptimeRow(state === 'up');
   }
   function renderMap() {
     // The ping stat stays on its "—" placeholder until the visitor's own zone
