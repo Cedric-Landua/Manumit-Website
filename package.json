@@ -6,10 +6,11 @@
   "description": "manumit.studio - static site shell + Cloudflare Worker API, composed into dist/",
     "scripts": {
     "dev": "npx serve dist & nodemon --watch scripts --watch src scripts/assemble-site.mjs",
-    "build": "node scripts/assemble-site.mjs",
+    "build": "node scripts/assemble-site.mjs --no-build",
     "assemble": "node scripts/assemble-site.mjs --no-build"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
   }
 }
+
