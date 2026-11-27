@@ -116,7 +116,7 @@ function bindToggleList(rootSel) {
 
   document.querySelectorAll('.site-footer .col').forEach(function (column) {
     var heading = column.querySelector('h2');
-    if (!heading || heading.textContent.trim() !== 'Products') return;
+    if (!heading || ['Products', 'Apps'].indexOf(heading.textContent.trim()) < 0) return;
     var productLinks = Array.prototype.slice.call(column.querySelectorAll('a')).filter(function (link) {
       return linkPath(link) === '/products/syllable';
     });

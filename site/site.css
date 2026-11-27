@@ -1616,3 +1616,18 @@ body.edition-enterprise .pol-card[data-edition="user"] { display: none !importan
 }
 .mm-home .mm-net .mm-live.is-degraded { background: rgba(217, 165, 33, 0.14); color: #8a6113; }
 .mm-home .mm-net .mm-live.is-down { background: rgba(224, 101, 95, 0.12); color: #a63d38; }
+
+/* ===== Round 3: button-driven stack drawer, chrome-free hero widget ===== */
+.mm-stack-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 32px; }
+.mm-stack-summary .mm-stack-sub { margin: 0; }
+button.mm-stack-toggle { background: var(--surface); font-family: inherit; cursor: pointer; }
+button.mm-stack-toggle:hover { border-color: var(--brand); color: var(--brand-dark); }
+.mm-stack-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.mm-stack-body[hidden] { display: none; }
+
+/* Hero preview: a plain app widget (the My apps cards own the browser chrome). */
+.mm-hero-widget { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 48px -28px rgba(23, 39, 48, 0.35); }
+
+@media (max-width: 640px) {
+  .mm-stack-summary { flex-direction: column; align-items: flex-start; padding: 20px; gap: 16px; }
+}

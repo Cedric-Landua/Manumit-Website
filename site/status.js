@@ -49,12 +49,15 @@
     var row = document.getElementById('mm-up-row');
     if (row) row.hidden = !on;
   }
+  // Never renders a placeholder dash: without a reading the number is simply
+  // left out, and the label says data is still being collected.
   function setUptime(pct) {
     var upEl = document.getElementById('mm-up');
     var lbl = document.getElementById('mm-up-label');
     if (lbl) lbl.textContent = (RANGE_LABEL[range] || range) + ((pct == null && lastLive) ? ' · collecting data' : '');
     if (!upEl) return;
-    if (pct == null) { upEl.textContent = '—'; upEl.style.color = ''; return; }
+    if (pct == null) { upEl.textContent = ''; upEl.hidden = true; upEl.style.color = ''; return; }
+    upEl.hidden = false;
     upEl.textContent = pct + '%';
     upEl.style.color = pct >= 99 ? '#2ee6a8' : pct >= 95 ? '#d9a521' : '#e0655f';
   }
@@ -72,7 +75,8 @@
     if (txt) txt.textContent = state === 'up' ? 'All systems operational'
       : state === 'degraded' ? 'Degraded, retrying' : 'Unreachable, retrying';
     setUptime(state === 'up' ? pct : null);
-    showUptimeRow(state === 'up');
+    // The row appears only once there is a real (or cached) percentage to show.
+    showUptimeRow(state === 'up' && pct != null);
   }
   function renderMap() {
     // The ping stat stays on its "—" placeholder until the visitor's own zone

@@ -27,7 +27,7 @@
     <meta name="twitter:image" content="https://manumit.studio/og-home-preview.jpg" />
     <meta name="twitter:image:alt" content="Manumit homepage: fast, private productivity tools with zero subscriptions, no ads, and no paywalls" />
     <meta name="description" content="Quality apps, completely free, with optional, encrypted, cloud-syncing, zero unwanted data use." />
-    <link rel="stylesheet" href="/site.css?v=149" />
+    <link rel="stylesheet" href="/site.css?v=150" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -74,7 +74,7 @@
         <nav>
           <a href="/" class="active">Home</a>
           <div class="nav-drop">
-            <a href="/products/" class="drop-toggle">Products <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
+            <a href="/products/" class="drop-toggle">Apps <svg class="caret" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5l3 3 3-3" /></svg></a>
             <div class="drop-menu">
               <a href="/products/split-task/">Split Task</a>
               <a href="/products/syllable/">Syllable</a>
@@ -96,7 +96,7 @@
       <section class="mm-hero mm-hero--painting mm-hero--split" id="mm-hero">
         <div class="mm-hero-inner">
           <div class="mm-hero-copy">
-            <p class="mm-hero-kicker">No ads · No tracking</p>
+            <p class="mm-hero-kicker">Free forever · No tracking</p>
             <h1>Fast, private productivity tools.<br /><span>Zero subscriptions.</span></h1>
             <p class="painting-lede">Plan your days with Split Task and grow your vocabulary with Syllable. Every feature is unlocked, and your data stays yours.</p>
             <div class="actions mm-actions">
@@ -106,8 +106,7 @@
           </div>
 
           <div class="mm-hero-visual" aria-hidden="true">
-            <div class="mm-browser mm-browser--hero">
-              <div class="mm-browser-bar"><span></span><span></span><span></span><em>/products/split-task/app</em></div>
+            <div class="mm-hero-widget">
               <div class="mm-st mm-st--hero">
                 <div class="mm-st-head"><strong>Today</strong><small>3 of 5 done</small></div>
                 <div class="mm-st-progress"><i style="width: 60%"></i></div>
@@ -240,15 +239,15 @@
       </section>
 
       <section class="stack mm-layers" id="tech-stack">
-        <details class="mm-stack-details">
-          <summary>
-            <span class="section-head mm-layers-head">
+        <div class="mm-stack-details">
+          <div class="mm-stack-summary">
+            <div class="section-head mm-layers-head">
               <h2 class="mm-stack-title">Every layer, in the open</h2>
-              <span class="mm-stack-sub">What runs the backend, what ships to your device, and what you touch. Read the policies for each layer.</span>
-            </span>
-            <span class="mm-stack-toggle"><span class="mm-stack-show">Show the stack</span><span class="mm-stack-hide">Hide the stack</span><svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5l3 3 3-3" /></svg></span>
-          </summary>
-          <div class="mm-stack-body">
+              <p class="mm-stack-sub">What runs the backend, what ships to your device, and what you touch. Read the policies for each layer.</p>
+            </div>
+            <button type="button" class="mm-stack-toggle" id="mm-stack-toggle" aria-expanded="false" aria-controls="mm-stack-body"><span class="mm-stack-label">Show the stack</span><svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.5l3 3 3-3" /></svg></button>
+          </div>
+          <div class="mm-stack-body" id="mm-stack-body" hidden>
           <div class="mm-layer mm-layer--backend">
             <div class="mm-layer-tag mm-layer-tag--backend"><strong>01 · The backend</strong><span>Manumit code, running on Cloudflare's servers: API, data, and mail.</span></div>
             <div class="stack-grid">
@@ -360,7 +359,7 @@
           </div>
         </div>
           </div>
-        </details>
+        </div>
       </section>
 
       <section class="mm-net mm-net--after" aria-label="Network status">
@@ -369,7 +368,7 @@
           <h2>Access from anywhere.</h2>
           <p>Uptime comes straight from the server. Latencies are estimated per region.</p>
           <div class="mm-up-row" id="mm-up-row" hidden>
-            <div class="mm-up-inline"><span class="mm-up-prefix">Uptime</span><strong id="mm-up">—</strong><span id="mm-up-label">last 24h</span></div>
+            <div class="mm-up-inline"><span class="mm-up-prefix">Uptime</span><strong id="mm-up"></strong><span id="mm-up-label">last 24h</span></div>
             <div class="mm-range" role="group" aria-label="Uptime range">
               <button type="button" data-range="24h" class="mm-range-btn mm-range-on" aria-pressed="true">24h</button>
               <button type="button" data-range="7d" class="mm-range-btn" aria-pressed="false">7d</button>
@@ -465,8 +464,8 @@
           <a href="https://mail.google.com/mail/?view=cm&fs=1&to=freeerapps.dev%40gmail.com" target="_blank" rel="noopener">freeerapps.dev@gmail.com</a>
         </div>
         <div class="col">
-          <h2>Products</h2>
-          <a href="/products/">Browse</a>
+          <h2>Apps</h2>
+          <a href="/products/">All apps</a>
           <a href="/products/split-task/">Split Task</a>
           <a href="/products/syllable/">Syllable</a>
         </div>
@@ -487,7 +486,8 @@
 
     <script defer src="/shared.js"></script>
     <script defer src="/nav.js"></script>
-    <script defer src="/status.js?v=3"></script>
+    <script defer src="/status.js?v=4"></script>
+    <script defer src="/stack.js?v=1"></script>
     <script defer src="/help-widget.js"></script>
   </body>
 </html>
