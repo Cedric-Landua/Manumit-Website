@@ -1631,3 +1631,49 @@ button.mm-stack-toggle:hover { border-color: var(--brand); color: var(--brand-da
 @media (max-width: 640px) {
   .mm-stack-summary { flex-direction: column; align-items: flex-start; padding: 20px; gap: 16px; }
 }
+
+/* Homepage: try-it previews and security section */
+.mm-try, .mm-sec { width: min(980px, calc(100% - 48px)); margin: 64px auto 0; }
+.mm-try-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.mm-try-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.mm-try-card > small { color: var(--brand); font-weight: 600; }
+.mm-try-card label { font-size: 14px; color: var(--text); }
+.mm-try-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mm-try-row input { flex: 1 1 180px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; color: var(--text); background: var(--surface); }
+.mm-try-note { font-size: 13px; opacity: .75; margin: 0; }
+.mm-try-out { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mm-try-out li { display: flex; gap: 12px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; }
+.mm-try-out b { min-width: 48px; color: var(--brand); }
+.mm-flip { min-height: 140px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; padding: 20px; text-align: center; }
+.mm-flip:focus-visible, .mm-try-row input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.mm-flip span { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; min-height: 100px; }
+.mm-flip span[hidden] { display: none; }
+.mm-flip strong { font-size: 24px; }
+.mm-flip em { font-size: 13px; opacity: .75; font-style: normal; }
+.mm-sec-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.mm-sec-grid li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.mm-sec-grid h3 { margin: 0 0 6px; font-size: 17px; }
+.mm-sec-grid p { margin: 0; font-size: 14px; }
+
+/* Redesign: glass header, editorial hero, bento, standards */
+.site-header.mm-glass { position: sticky; top: 0; z-index: 20; backdrop-filter: saturate(1.4) blur(14px); background: color-mix(in srgb, var(--surface) 78%, transparent); border-bottom: 1px solid var(--border); }
+.mm-glass .bar { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.mm-glass nav { display: flex; align-items: center; gap: 22px; }
+.mm-glass nav a:not(.btn) { color: var(--text); text-decoration: none; font-weight: 500; }
+.mm-brand { display: inline-flex; align-items: center; gap: 8px; }
+.mm-open { padding: 8px 16px; }
+@media (max-width: 640px) { .mm-glass nav { gap: 12px; font-size: 14px; } .mm-open { padding: 6px 10px; } }
+.mm-hero--editorial .mm-hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 36px; max-width: 1000px; }
+.mm-hero--editorial h1 { letter-spacing: -0.03em; font-size: clamp(36px, 6vw, 60px); }
+.mm-hero--editorial .mm-actions { justify-content: center; }
+.mm-hero--editorial .mm-hero-visual { width: min(460px, 100%); }
+.mm-bento { grid-template-columns: 1.25fr 1fr; align-items: stretch; }
+@media (max-width: 820px) { .mm-bento { grid-template-columns: 1fr; } }
+.mm-std { width: min(980px, calc(100% - 48px)); margin: 64px auto 0; }
+.mm-std-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.mm-std-grid > div { padding: 24px; border-left: 1px solid var(--border); }
+.mm-std-grid > div:first-child { border-left: 0; }
+.mm-std-grid h3 { margin: 0 0 8px; font-size: 18px; }
+.mm-std-grid p { margin: 0; font-size: 14px; }
+@media (max-width: 760px) { .mm-std-grid { grid-template-columns: 1fr; } .mm-std-grid > div { border-left: 0; border-top: 1px solid var(--border); } .mm-std-grid > div:first-child { border-top: 0; } }
+.mm-net--solo { margin-top: 48px; }

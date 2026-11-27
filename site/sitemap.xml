@@ -45,4 +45,5 @@
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url><loc>https://manumit.studio/status/</loc></url>
 </urlset>
