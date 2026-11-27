@@ -100,7 +100,7 @@
       links.innerHTML = REGIONS.map(function (r, i) {
         var dist = Math.hypot(r.x - HUB.x, r.y - HUB.y);
         return '<path d="' + arc(r.x, r.y, 20 + dist * 0.22) + '" class="mm-link" style="animation-delay:' + (i * 0.45) + 's"/>'
-          + '<circle r="3" fill="#9cf4e8" class="mm-packet" style="offset-path: path(\'' + arc(r.x, r.y, 20 + dist * 0.22) + '\'); animation-delay:' + (i * 0.45) + 's"/>';
+          + '<circle r="3" fill="#ffffff" class="mm-packet" style="offset-path: path(\'' + arc(r.x, r.y, 20 + dist * 0.22) + '\'); animation-delay:' + (i * 0.45) + 's"/>';
       }).join('');
     }
     if (list) {
