@@ -35,7 +35,7 @@ worker-backup.js
 
 #.gitignore
 .gitignore
-.codebasememo
+.codebase-memory/
 # Private files
 schema*.sql
 schema*.txt
@@ -45,4 +45,7 @@ package-lock*.json
 npm-shrinkwrap.json
 yarn.lock
 pnpm-lock.yaml
+
+
+.codebase-memory/
 
