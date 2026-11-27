@@ -1099,12 +1099,15 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 /* Coastlines give the latency plot a clear ocean-and-land map. */
 .mm-map { background: var(--bg); border-radius: 12px; padding: 12px; }
 .mm-map svg { width: 100%; height: auto; display: block; }
-.mm-map-bg { fill: url(#mm-ocean); stroke: rgba(255,255,255,0.2); }
-.mm-map-current path { fill: none; stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.25; }
-.mm-map-beach { fill: var(--brand-tint); stroke: var(--brand-tint); stroke-width: 1; opacity: 0.4; }
-.mm-map-land { fill: var(--brand); stroke: var(--brand-tint); stroke-width: 0.7; opacity: 0.7; }
-.mm-map-island { fill: var(--brand); stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.7; }
-.mm-dot { fill: var(--brand-tint); opacity: 0.5; }
+.mm-map-bg { fill: url(#mm-ocean); stroke: rgba(255,255,255,0.16); }
+.mm-map-water-glow { fill: url(#mm-water-glow); pointer-events: none; }
+.mm-map-water-band { fill: url(#mm-water-current); opacity: 0.68; pointer-events: none; }
+.mm-map-water-band-lower { opacity: 0.42; }
+.mm-map-current path { fill: none; stroke: rgba(124,183,173,0.28); stroke-width: 1.5; opacity: 0.62; }
+.mm-map-beach { fill: url(#mm-beach); stroke: #d4c393; stroke-width: 1; opacity: 0.76; }
+.mm-map-land { fill: url(#mm-grass); stroke: #91a878; stroke-width: 0.7; opacity: 0.94; }
+.mm-map-island { fill: url(#mm-grass); stroke: #91a878; stroke-width: 1.5; opacity: 0.94; }
+.mm-dot { fill: #a3b98d; opacity: 0.58; }
 .mm-dot-lit { fill: #fff; }
 .mm-link { fill: none; stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.75; }
 .mm-node-ring { fill: var(--brand-dark); stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
