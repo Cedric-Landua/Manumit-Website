@@ -1104,10 +1104,10 @@ footer.site-footer { background: var(--footer-bg); border-top: 1px solid var(--b
 .mm-map-water-band { fill: url(#mm-water-current); opacity: 0.68; pointer-events: none; }
 .mm-map-water-band-lower { opacity: 0.42; }
 .mm-map-current path { fill: none; stroke: rgba(124,183,173,0.28); stroke-width: 1.5; opacity: 0.62; }
-.mm-map-beach { fill: url(#mm-beach); stroke: #E8DCC4; stroke-width: 1; opacity: 0.76; }
-.mm-map-land { fill: url(#mm-grass); stroke: #AFC0A9; stroke-width: 0.7; opacity: 0.94; }
-.mm-map-island { fill: url(#mm-grass); stroke: #AFC0A9; stroke-width: 1.5; opacity: 0.94; }
-.mm-dot { fill: #B9CFBA; opacity: 0.58; }
+.mm-map-beach { fill: url(#mm-beach); stroke: #E6C16F; stroke-width: 1; opacity: 0.76; }
+.mm-map-land { fill: url(#mm-grass); stroke: #83B96F; stroke-width: 0.7; opacity: 0.94; }
+.mm-map-island { fill: url(#mm-grass); stroke: #83B96F; stroke-width: 1.5; opacity: 0.94; }
+.mm-dot { fill: #A2D887; opacity: 0.58; }
 .mm-dot-lit { fill: #fff; }
 .mm-link { fill: none; stroke: var(--brand-tint); stroke-width: 1.5; opacity: 0.75; }
 .mm-node-ring { fill: var(--brand-dark); stroke-width: 1.5; transition: r 0.18s ease, stroke-width 0.18s ease; }
