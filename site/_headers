@@ -46,12 +46,6 @@
 /status.js
   Cache-Control: public, max-age=0, must-revalidate
 
-/stack.js
-  Cache-Control: public, max-age=0, must-revalidate
-
-/demo.js
-  Cache-Control: public, max-age=0, must-revalidate
-
 # Unhashed like site.css; the tab logo changes in place between deploys.
 /favicon.svg
   Cache-Control: public, max-age=0, must-revalidate

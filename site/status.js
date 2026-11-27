@@ -25,39 +25,12 @@
   var range = '24h';
   var windowsCache = null;
   var lastLive = false;
-  // Last good response, kept so a return visit renders real figures at once
-  // instead of an empty pending state. Storage can throw (private mode,
-  // blocked site data), so every access is guarded and the page works without it.
-  var CACHE_KEY = 'mm-status-cache';
-  var CACHE_MAX_AGE = 24 * 3600000;
-  function readCache() {
-    try {
-      var raw = window.localStorage.getItem(CACHE_KEY);
-      if (!raw) return null;
-      var c = JSON.parse(raw);
-      if (!c || !c.d || Date.now() - c.t > CACHE_MAX_AGE) return null;
-      return c.d;
-    } catch (e) { return null; }
-  }
-  function writeCache(d) {
-    try { window.localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {}
-  }
-  // The panel's first paint is the optimistic "All systems operational" pill
-  // (or the cached reading, applied in init); the uptime row stays hidden until
-  // a reading exists, so visitors never see a loading or empty state.
-  function showUptimeRow(on) {
-    var row = document.getElementById('mm-up-row');
-    if (row) row.hidden = !on;
-  }
-  // Never renders a placeholder dash: without a reading the number is simply
-  // left out, and the label says data is still being collected.
   function setUptime(pct) {
     var upEl = document.getElementById('mm-up');
     var lbl = document.getElementById('mm-up-label');
     if (lbl) lbl.textContent = (RANGE_LABEL[range] || range) + ((pct == null && lastLive) ? ' · collecting data' : '');
     if (!upEl) return;
-    if (pct == null) { upEl.textContent = ''; upEl.hidden = true; upEl.style.color = ''; return; }
-    upEl.hidden = false;
+    if (pct == null) { upEl.textContent = '—'; upEl.style.color = ''; return; }
     upEl.textContent = pct + '%';
     upEl.style.color = pct >= 99 ? '#2ee6a8' : pct >= 95 ? '#d9a521' : '#e0655f';
   }
@@ -70,13 +43,9 @@
     var state = !ok ? 'down' : (d && d.status === 'degraded') ? 'degraded' : 'up';
     lastLive = (state === 'up');
     if (dot) dot.style.background = state === 'up' ? '#2ee6a8' : state === 'degraded' ? '#d9a521' : '#e0655f';
-    var pill = txt && txt.parentNode;
-    if (pill) { pill.classList.toggle('is-degraded', state === 'degraded'); pill.classList.toggle('is-down', state === 'down'); }
-    if (txt) txt.textContent = state === 'up' ? 'All systems operational'
+    if (txt) txt.textContent = state === 'up' ? 'Operational'
       : state === 'degraded' ? 'Degraded, retrying' : 'Unreachable, retrying';
     setUptime(state === 'up' ? pct : null);
-    // The row appears only once there is a real (or cached) percentage to show.
-    showUptimeRow(state === 'up' && pct != null);
   }
   function renderMap() {
     // The ping stat stays on its "—" placeholder until the visitor's own zone
@@ -178,7 +147,7 @@
         if (!res.ok) throw new Error('bad status');
         return res.json();
       })
-      .then(function (d) { writeCache(d); setStatus(true, d); updateHeadline(d); })
+      .then(function (d) { setStatus(true, d); updateHeadline(d); })
       .catch(function () { clearTimeout(to); setStatus(false, null); });
   }
   function init() {
@@ -196,8 +165,6 @@
         setUptime(windowsCache && windowsCache[range] ? windowsCache[range].pct : null);
       });
     }
-    var cached = readCache();
-    if (cached) { setStatus(true, cached); updateHeadline(cached); }
     check();
     setInterval(check, 3600000); // hourly: buckets are hourly, faster polling only burns D1 reads
   }
