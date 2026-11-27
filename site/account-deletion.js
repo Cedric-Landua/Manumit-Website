@@ -26,11 +26,6 @@
     message.className = 'help-form-message';
   }
 
-  function setBusy(button, busy, idleLabel, busyLabel) {
-    button.disabled = busy;
-    button.textContent = busy ? busyLabel : idleLabel;
-  }
-
   async function post(path, body) {
     var controller = new AbortController();
     var timeout = setTimeout(function () { controller.abort(); }, 20000);
@@ -65,7 +60,7 @@
   formVerify.addEventListener('submit', async function (event) {
     event.preventDefault();
     clearMessage();
-    setBusy(verifyButton, true, 'Verify identity', 'Verifying…');
+    window.FE.setBusy(verifyButton, true, 'Verify identity', 'Verifying…');
 
     accountName = usernameInput.value.trim();
     try {
@@ -82,14 +77,14 @@
       passwordHash = '';
       showMessage(requestError(error, 'Identity verification'), true);
     } finally {
-      setBusy(verifyButton, false, 'Verify identity', 'Verifying…');
+      window.FE.setBusy(verifyButton, false, 'Verify identity', 'Verifying…');
     }
   });
 
   formConfirm.addEventListener('submit', async function (event) {
     event.preventDefault();
     clearMessage();
-    setBusy(deleteButton, true, 'Delete account and cloud data', 'Deleting…');
+    window.FE.setBusy(deleteButton, true, 'Delete account and cloud data', 'Deleting…');
     try {
       var result = await post('/api/delete-account', { username: accountName, password_hash: passwordHash });
       if (!result || result.success !== true) throw new Error('The account deletion was not confirmed by the service. Please contact support before retrying.');
@@ -103,7 +98,7 @@
       showMessage(requestError(error, 'Account deletion'), true);
     } finally {
       if (success.hidden) {
-        setBusy(deleteButton, false, 'Delete account and cloud data', 'Deleting…');
+        window.FE.setBusy(deleteButton, false, 'Delete account and cloud data', 'Deleting…');
       }
     }
   });

@@ -345,17 +345,14 @@ async function sendTicketConfirmation(env, email, ticketId, type, message) {
 
   const ticketText = typeof message === 'string' ? message : '';
   const article = /^[aeiou]/i.test(typeLabel) ? 'an' : 'a';
-  const escapeHtmlLocal = (value) => String(value)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   const body = `Hi there,\n\nThank you for submitting ${article} ${typeLabel} ticket, ${followUp}\n\nYour ticket id: ${ticketId}\nOriginal ticket entry: ${ticketText}\n\nIf you need to add anything, email to freeerapps.dev@gmail.com.\n\n- Free-er Apps`;
 
   const html = [
     '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#111827;">',
     '<p>Hi there,</p>',
-    `<p>Thank you for submitting ${article} <strong>${escapeHtmlLocal(typeLabel)}</strong> ticket, ${escapeHtmlLocal(followUp)}</p>`,
-    `<p>Your ticket id: ${escapeHtmlLocal(ticketId)}<br>Original ticket entry: ${escapeHtmlLocal(ticketText).replace(/\r?\n/g, '<br>')}</p>`,
+    `<p>Thank you for submitting ${article} <strong>${escapeHtml(typeLabel)}</strong> ticket, ${escapeHtml(followUp)}</p>`,
+    `<p>Your ticket id: ${escapeHtml(ticketId)}<br>Original ticket entry: ${escapeHtml(ticketText).replace(/\r?\n/g, '<br>')}</p>`,
     '<p>If you need to add anything, email to <a href="mailto:freeerapps.dev@gmail.com">freeerapps.dev@gmail.com</a>.</p>',
     '<p>- Free-er Apps</p>',
     '</div>',

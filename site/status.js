@@ -1,6 +1,6 @@
 // Homepage network status: server reports uptime; latencies are fixed
 // typical estimates rendered as an animated map. No user-triggered ping.
-// Status refreshes quietly every 60 s; map animates continuously.
+// Status refreshes quietly once an hour; map animations continue between checks.
 (function () {
   var API = (window.FE && window.FE.API_BASE) || 'https://manumit-api.landua-cedric.workers.dev';
   var HUB = { id: 'hub', label: 'Core hub', x: 140, y: 105 };

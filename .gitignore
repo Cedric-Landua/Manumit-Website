@@ -26,3 +26,9 @@ npm-debug.log*
 .idea/
 *.swp
 *~
+
+# DATABASE PRIVATES
+schema-script.txt
+schema-d1.sql
+worker.js
+worker-backup.js

@@ -69,12 +69,12 @@ function bindToggleList(rootSel) {
 }
 
 (function () {
+  function linkPath(link) {
+    return (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+  }
+
   var siteNav = document.querySelector('.site-header nav');
   if (siteNav) {
-    function linkPath(link) {
-      return (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
-    }
-
     function ensureMenuLink(menu, path, label) {
       var links = Array.prototype.slice.call(menu.querySelectorAll('a')).filter(function (link) {
         return linkPath(link) === path;
@@ -130,7 +130,7 @@ function bindToggleList(rootSel) {
     var heading = column.querySelector('h2');
     if (!heading || heading.textContent.trim() !== 'Products') return;
     var productLinks = Array.prototype.slice.call(column.querySelectorAll('a')).filter(function (link) {
-      return (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') === '/products/syllable';
+      return linkPath(link) === '/products/syllable';
     });
     var syllableLink = productLinks.shift();
     if (!syllableLink) {
