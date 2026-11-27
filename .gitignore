@@ -36,3 +36,13 @@ worker-backup.js
 #.gitignore
 .gitignore
 .codebasememo
+# Private files
+schema*.sql
+schema*.txt
+worker*.js
+google*.html
+package-lock*.json
+npm-shrinkwrap.json
+yarn.lock
+pnpm-lock.yaml
+
