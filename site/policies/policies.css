@@ -269,3 +269,5 @@
   .prod-redesign .feat-grid { margin-top: 24px; }
   .prod-redesign .feat-list { margin-top: 18px; }
 }
+Product cards use the original app artwork with a softly rounded frame.
+.prod-redesign .product-card-heading .product-logo { width: 56px; height: 56px; object-fit: cover; border: 0; border-radius: 14px; background: transparent; }
