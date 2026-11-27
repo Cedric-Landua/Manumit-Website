@@ -35,3 +35,4 @@ worker-backup.js
 
 #.gitignore
 .gitignore
+.codebasememo
